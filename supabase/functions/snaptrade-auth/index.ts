@@ -7,6 +7,20 @@ const corsHeaders = {
 };
 
 const SNAPTRADE_API = "https://api.snaptrade.com/api/v1";
+const VALID_ACTIONS = ["register", "connect"];
+const ALLOWED_REDIRECT_ORIGINS = [
+  "https://gridiron-grow-game.lovable.app",
+  "https://id-preview--80f0a26c-bb9e-400b-9274-981c5ca4290c.lovable.app",
+];
+
+function isValidRedirectUri(uri: string): boolean {
+  try {
+    const url = new URL(uri);
+    return ALLOWED_REDIRECT_ORIGINS.some(origin => url.origin === origin);
+  } catch {
+    return false;
+  }
+}
 
 async function snaptradeRequest(
   method: string,
@@ -18,15 +32,12 @@ async function snaptradeRequest(
   const consumerKey = Deno.env.get("SNAPTRADE_CONSUMER_KEY")!;
   const timestamp = Math.floor(Date.now() / 1000).toString();
 
-  // Build query string with clientId and timestamp
   const allParams = { clientId, timestamp, ...queryParams };
   const queryString = new URLSearchParams(allParams).toString();
 
-  // Signature = HMAC-SHA256(consumerKey, JSON.stringify({content, path, query}, sorted keys, compact))
   const requestData = body || {};
   const requestPath = `/api/v1${path}`;
   
-  // Must sort keys recursively to match Python's json.dumps(sort_keys=True, separators=(",",":"))
   function sortedStringify(obj: unknown): string {
     if (obj === null || typeof obj !== "object" || Array.isArray(obj)) {
       return JSON.stringify(obj);
@@ -49,11 +60,10 @@ async function snaptradeRequest(
     ["sign"]
   );
   const sigBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(sigContent));
-  // SnapTrade expects base64-encoded signature
   const sigBase64 = btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
 
   const url = `${SNAPTRADE_API}${path}?${queryString}`;
-  console.log(`SnapTrade ${method} ${path} query=${queryString}`);
+  console.log(`SnapTrade ${method} ${path}`);
 
   const res = await fetch(url, {
     method,
@@ -67,9 +77,33 @@ async function snaptradeRequest(
   const data = await res.json();
   if (!res.ok) {
     console.error("SnapTrade API error:", res.status, JSON.stringify(data));
-    throw new Error(`SnapTrade API error [${res.status}]: ${JSON.stringify(data)}`);
+    throw new Error(`SNAPTRADE_API_ERROR:${res.status}`);
   }
   return data;
+}
+
+function safeErrorResponse(error: unknown): Response {
+  console.error("snaptrade-auth error:", error);
+  
+  let userMessage = "Something went wrong. Please try again.";
+  
+  if (error instanceof Error) {
+    const msg = error.message;
+    if (msg.includes("Unauthorized") || msg.includes("authorization")) {
+      userMessage = "Authentication failed. Please sign in again.";
+    } else if (msg.includes("already exist") || msg.includes("1010")) {
+      userMessage = "Account connection already exists. Try connecting again.";
+    } else if (msg.includes("No SnapTrade user secret")) {
+      userMessage = "Please register your brokerage account first.";
+    } else if (msg.includes("Invalid")) {
+      userMessage = "Invalid request. Please check your input.";
+    }
+  }
+  
+  return new Response(JSON.stringify({ error: userMessage }), {
+    status: 400,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 serve(async (req) => {
@@ -83,16 +117,31 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Missing authorization header");
+    if (!authHeader) throw new Error("Unauthorized");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { action, redirectUri, userSecret } = await req.json();
+    const body = await req.json();
+    const { action, redirectUri, userSecret } = body;
+
+    // Validate action
+    if (!action || !VALID_ACTIONS.includes(action)) {
+      throw new Error("Invalid action");
+    }
+
+    // Validate redirectUri if provided
+    if (redirectUri && !isValidRedirectUri(redirectUri)) {
+      throw new Error("Invalid redirect URI");
+    }
+
+    // Validate userSecret format if provided
+    if (userSecret && (typeof userSecret !== "string" || userSecret.length > 200)) {
+      throw new Error("Invalid userSecret");
+    }
 
     if (action === "register") {
-      // Check if user already has a stored secret
       const { data: profile } = await supabase
         .from("profiles")
         .select("snaptrade_user_secret")
@@ -105,7 +154,6 @@ serve(async (req) => {
         });
       }
 
-      // Register new user with SnapTrade
       try {
         const result = await snaptradeRequest(
           "POST",
@@ -114,7 +162,6 @@ serve(async (req) => {
           { userId: user.id }
         );
 
-        // Store the secret
         await supabase
           .from("profiles")
           .update({ snaptrade_user_secret: result.userSecret })
@@ -126,8 +173,7 @@ serve(async (req) => {
       } catch (regError) {
         const errMsg = regError instanceof Error ? regError.message : "";
         if (errMsg.includes("1010") || errMsg.includes("already exist")) {
-          // User exists but we lost the secret — need to delete and re-register
-          console.log("User already registered but secret not stored. Deleting and re-registering...");
+          console.log("User already registered. Deleting and re-registering...");
           await snaptradeRequest("DELETE", `/snapTrade/deleteUser`, {}, { userId: user.id });
           const result = await snaptradeRequest("POST", "/snapTrade/registerUser", {}, { userId: user.id });
           await supabase.from("profiles").update({ snaptrade_user_secret: result.userSecret }).eq("user_id", user.id);
@@ -140,7 +186,6 @@ serve(async (req) => {
     }
 
     if (action === "connect") {
-      // Get stored secret
       let secret = userSecret;
       if (!secret) {
         const { data: profile } = await supabase
@@ -170,13 +215,8 @@ serve(async (req) => {
       );
     }
 
-    throw new Error(`Unknown action: ${action}`);
+    throw new Error("Invalid action");
   } catch (error) {
-    console.error("snaptrade-auth error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return safeErrorResponse(error);
   }
 });
