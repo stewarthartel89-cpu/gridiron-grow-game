@@ -1,12 +1,21 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import LeagueHeader from "@/components/LeagueHeader";
+import WeeklyMatchups from "@/components/WeeklyMatchups";
+import Standings from "@/components/Standings";
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <LeagueHeader />
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid gap-8 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <WeeklyMatchups />
+          </div>
+          <div className="lg:col-span-2">
+            <Standings />
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
