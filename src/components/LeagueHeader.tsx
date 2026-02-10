@@ -1,9 +1,18 @@
-import { TrendingUp, DollarSign, Zap } from "lucide-react";
-import { currentWeek, seasonLength, leagueMembers } from "@/data/mockData";
+import { TrendingUp, Zap } from "lucide-react";
+import { useLeagueData } from "@/hooks/useLeagueData";
 
 const LeagueHeader = () => {
-  // Current user (mock: first member)
-  const me = leagueMembers[0];
+  const { settings, currentMember, loading } = useLeagueData();
+
+  if (loading || !settings) {
+    return (
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto max-w-2xl px-4 py-3">
+          <div className="h-9 w-48 animate-pulse rounded-lg bg-secondary" />
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="border-b border-border bg-card">
@@ -15,26 +24,27 @@ const LeagueHeader = () => {
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-wider text-foreground">
-                Capital League
+                {settings.name}
               </h1>
               <p className="text-[10px] text-muted-foreground">Fantasy Investing</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* XP badge */}
-            <div className="flex items-center gap-1 rounded-full bg-xp/15 px-2 py-1">
-              <Zap className="h-3 w-3 text-xp" />
-              <span className="text-[10px] font-bold text-xp">{me.xp.toLocaleString()} XP</span>
-            </div>
-            {/* Level */}
-            <div className="flex items-center gap-1 rounded-full bg-bonus/15 px-2 py-1">
-              <span className="text-[10px] font-bold text-bonus">LVL {me.level}</span>
-            </div>
-            {/* Week */}
+            {currentMember && (
+              <>
+                <div className="flex items-center gap-1 rounded-full bg-xp/15 px-2 py-1">
+                  <Zap className="h-3 w-3 text-xp" />
+                  <span className="text-[10px] font-bold text-xp">{currentMember.xp.toLocaleString()} XP</span>
+                </div>
+                <div className="flex items-center gap-1 rounded-full bg-bonus/15 px-2 py-1">
+                  <span className="text-[10px] font-bold text-bonus">LVL {currentMember.level}</span>
+                </div>
+              </>
+            )}
             <div className="rounded-md bg-primary px-2 py-1">
               <p className="font-display text-[11px] font-bold text-primary-foreground">
-                WK {currentWeek}/{seasonLength}
+                WK {settings.currentWeek}/{settings.seasonLength}
               </p>
             </div>
           </div>
