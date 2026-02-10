@@ -21,7 +21,7 @@ const AuthPage = () => {
 
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -30,10 +30,14 @@ const AuthPage = () => {
           },
         });
         if (error) throw error;
-        toast({
-          title: "Check your email!",
-          description: "We sent you a confirmation link to verify your account.",
-        });
+        if (data.session) {
+          navigate("/");
+        } else {
+          toast({
+            title: "Check your email!",
+            description: "We sent you a confirmation link to verify your account.",
+          });
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
