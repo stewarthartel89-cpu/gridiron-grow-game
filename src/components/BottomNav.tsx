@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Target, Trophy, MessageCircle, Settings } from "lucide-react";
+import { Home, Search, Newspaper, Trophy, Settings } from "lucide-react";
 
 const tabs = [
   { path: "/", icon: Home, label: "Home" },
-  { path: "/lineup", icon: Target, label: "Lineup" },
+  { path: "/scout", icon: Search, label: "Scout" },
+  { path: "/news", icon: Newspaper, label: "News" },
   { path: "/league", icon: Trophy, label: "League" },
-  { path: "/social", icon: MessageCircle, label: "Social" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
 

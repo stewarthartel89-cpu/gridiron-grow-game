@@ -15,7 +15,6 @@ export interface Holding {
 export interface GameModifiers {
   diversityScore: number; // 0-100
   diversityPenalty: number; // multiplier, e.g. 0.9 if failing
-  fatiguePenalty: number; // reduction from holding same stocks
   stackingBonus: number; // bonus for correlated diversified plays
   volatilityBonus: number; // bonus for high-vol outperformance
   totalMultiplier: number; // final scoring multiplier
@@ -54,10 +53,10 @@ const calcSectorExposure = (holdings: Holding[]): Record<Sector, number> => {
   return result;
 };
 
-const makeModifiers = (diversityScore: number, fatigue: number = 0, stacking: number = 0, volatility: number = 0): GameModifiers => {
+const makeModifiers = (diversityScore: number, stacking: number = 0, volatility: number = 0): GameModifiers => {
   const diversityPenalty = diversityScore >= 60 ? 1.0 : 0.9;
-  const totalMultiplier = diversityPenalty - fatigue + stacking + volatility;
-  return { diversityScore, diversityPenalty, fatiguePenalty: fatigue, stackingBonus: stacking, volatilityBonus: volatility, totalMultiplier: Math.max(0.5, Math.min(1.3, totalMultiplier)) };
+  const totalMultiplier = diversityPenalty + stacking + volatility;
+  return { diversityScore, diversityPenalty, stackingBonus: stacking, volatilityBonus: volatility, totalMultiplier: Math.max(0.5, Math.min(1.3, totalMultiplier)) };
 };
 
 const marcus: Holding[] = [
@@ -138,7 +137,7 @@ export const leagueMembers: LeagueMember[] = [
     record: { wins: 9, losses: 3 }, streak: "W3",
     holdings: marcus, weeklyHistory: [0.8, 1.2, -0.5, 2.1, 1.5, -1.2, 3.1, 0.4, -0.8, 2.3, 1.8, -0.3, 4.2],
     xp: 2850, level: 12, badges: ["🏆 Season 1 Champ", "🔥 3-Win Streak", "📈 Best Week"],
-    gameModifiers: makeModifiers(72, 0.02, 0, 0.03),
+    gameModifiers: makeModifiers(72, 0, 0.03),
     sectorExposure: calcSectorExposure(marcus),
   },
   {
@@ -147,7 +146,7 @@ export const leagueMembers: LeagueMember[] = [
     record: { wins: 8, losses: 4 }, streak: "W1",
     holdings: sarah, weeklyHistory: [1.5, -0.3, 2.0, 0.8, -1.1, 1.8, 0.5, 2.2, -0.7, 1.3, 0.6, 1.9, 2.8],
     xp: 2420, level: 10, badges: ["🎯 Diversified Pro", "📊 Consistent"],
-    gameModifiers: makeModifiers(85, 0, 0.02, 0),
+    gameModifiers: makeModifiers(85, 0.02, 0),
     sectorExposure: calcSectorExposure(sarah),
   },
   {
@@ -156,7 +155,7 @@ export const leagueMembers: LeagueMember[] = [
     record: { wins: 7, losses: 5 }, streak: "L2",
     holdings: jake, weeklyHistory: [2.8, 3.5, -2.1, 1.0, -0.5, 4.2, -3.1, 1.8, 0.5, -1.8, 2.2, -0.9, -1.3],
     xp: 1980, level: 8, badges: ["💎 Diamond Hands", "🎰 High Roller"],
-    gameModifiers: makeModifiers(38, 0.05, 0, 0.08),
+    gameModifiers: makeModifiers(38, 0, 0.08),
     sectorExposure: calcSectorExposure(jake),
   },
   {
@@ -165,7 +164,7 @@ export const leagueMembers: LeagueMember[] = [
     record: { wins: 7, losses: 5 }, streak: "W2",
     holdings: emily, weeklyHistory: [0.5, 0.8, 0.3, 1.0, 0.7, -0.2, 0.9, 1.1, 0.4, 0.6, 1.2, 0.8, 3.5],
     xp: 2650, level: 11, badges: ["🎯 Diversified Pro", "🛡️ Steady Eddie", "📚 Scholar"],
-    gameModifiers: makeModifiers(95, 0.03, 0.05, 0),
+    gameModifiers: makeModifiers(95, 0.05, 0),
     sectorExposure: calcSectorExposure(emily),
   },
   {
@@ -174,7 +173,7 @@ export const leagueMembers: LeagueMember[] = [
     record: { wins: 6, losses: 6 }, streak: "L1",
     holdings: tyler, weeklyHistory: [0.3, -0.5, 0.8, 0.2, 1.1, -0.3, 0.6, -0.8, 1.2, 0.4, -0.2, 0.7, 1.1],
     xp: 1750, level: 7, badges: ["💰 Dividend King"],
-    gameModifiers: makeModifiers(78, 0.01, 0, 0),
+    gameModifiers: makeModifiers(78, 0, 0),
     sectorExposure: calcSectorExposure(tyler),
   },
   {
@@ -183,7 +182,7 @@ export const leagueMembers: LeagueMember[] = [
     record: { wins: 6, losses: 6 }, streak: "W1",
     holdings: aisha, weeklyHistory: [0.6, 0.2, -0.4, 0.8, -0.1, 0.5, -0.7, 0.3, 0.9, -0.3, 0.4, 0.1, -0.5],
     xp: 1620, level: 7, badges: ["💰 Dividend King", "🛡️ Steady Eddie"],
-    gameModifiers: makeModifiers(68, 0.02, 0, 0),
+    gameModifiers: makeModifiers(68, 0, 0),
     sectorExposure: calcSectorExposure(aisha),
   },
   {
@@ -192,7 +191,7 @@ export const leagueMembers: LeagueMember[] = [
     record: { wins: 5, losses: 7 }, streak: "L3",
     holdings: chris, weeklyHistory: [-1.2, 2.5, -0.8, 1.3, -2.0, 0.5, 1.8, -1.5, 0.7, -0.3, 1.1, -0.6, 0.9],
     xp: 1380, level: 6, badges: ["⚡ EV Stack"],
-    gameModifiers: makeModifiers(62, 0.03, 0.04, 0.02),
+    gameModifiers: makeModifiers(62, 0.04, 0.02),
     sectorExposure: calcSectorExposure(chris),
   },
   {
@@ -201,7 +200,7 @@ export const leagueMembers: LeagueMember[] = [
     record: { wins: 4, losses: 8 }, streak: "L1",
     holdings: dana, weeklyHistory: [-0.5, 1.8, -2.5, 3.2, -1.8, 0.3, -2.8, 1.5, -0.9, -1.2, 2.0, -1.5, -2.1],
     xp: 980, level: 4, badges: ["🎰 High Roller"],
-    gameModifiers: makeModifiers(55, 0.04, 0, 0.05),
+    gameModifiers: makeModifiers(55, 0, 0.05),
     sectorExposure: calcSectorExposure(dana),
   },
 ];

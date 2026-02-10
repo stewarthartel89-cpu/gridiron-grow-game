@@ -110,14 +110,7 @@ const LineupPage = () => {
         </div>
 
         {/* Game Modifiers Summary */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="rounded-xl border border-border bg-card p-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Fatigue</p>
-            <p className={`mt-1 font-display text-lg font-bold ${me.gameModifiers.fatiguePenalty > 0 ? "text-warning" : "text-gain"}`}>
-              {me.gameModifiers.fatiguePenalty > 0 ? `-${(me.gameModifiers.fatiguePenalty * 100).toFixed(0)}%` : "None"}
-            </p>
-            <p className="text-[9px] text-muted-foreground mt-0.5">Same stocks held too long</p>
-          </div>
+        <div className="grid grid-cols-3 gap-2.5">
           <div className="rounded-xl border border-border bg-card p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Stacking</p>
             <p className={`mt-1 font-display text-lg font-bold ${me.gameModifiers.stackingBonus > 0 ? "text-bonus" : "text-muted-foreground"}`}>
@@ -167,19 +160,11 @@ const LineupPage = () => {
             {(activeTab === "active" ? activeHoldings : benchHoldings).map(h => {
               const gainPct = ((h.currentPrice - h.avgCost) / h.avgCost) * 100;
               const isUp = gainPct >= 0;
-              const isFatigued = h.weeksHeld >= 10;
               return (
                 <div key={h.symbol} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary font-display text-[10px] font-bold text-secondary-foreground">
-                        {h.symbol}
-                      </div>
-                      {isFatigued && (
-                        <div className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-warning text-[7px]">
-                          😴
-                        </div>
-                      )}
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary font-display text-[10px] font-bold text-secondary-foreground">
+                      {h.symbol}
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
