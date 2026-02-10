@@ -17,6 +17,7 @@ import SocialPage from "./pages/SocialPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
 import LeagueHubPage from "./pages/LeagueHubPage";
+import ContactPage from "./pages/ContactPage";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import Onboarding from "./components/Onboarding";
@@ -80,6 +81,7 @@ const AnimatedRoutes = () => {
           <Route path="/league" element={<ProtectedRoute><LeagueGate><LeaguePage /></LeagueGate></ProtectedRoute>} />
           <Route path="/social" element={<ProtectedRoute><LeagueGate><SocialPage /></LeagueGate></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
