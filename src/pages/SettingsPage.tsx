@@ -1,19 +1,70 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LeagueHeader from "@/components/LeagueHeader";
 import PageTransition from "@/components/PageTransition";
 import { useAuth } from "@/contexts/AuthContext";
 import { leagueSettings, leagueMembers } from "@/data/mockData";
-import { Settings as SettingsIcon, Crown, Shield, DollarSign, Calendar, Users, ChevronRight, Trophy, BarChart3, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Settings as SettingsIcon, Crown, Shield, DollarSign, Calendar, Users, ChevronRight, Trophy, BarChart3, LogOut, Link2, RefreshCw, Loader2 } from "lucide-react";
 
 const SettingsPage = () => {
   const s = leagueSettings;
   const me = leagueMembers[0];
-  const { signOut } = useAuth();
+  const { signOut, session } = useAuth();
   const navigate = useNavigate();
+  const [connecting, setConnecting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
+  };
+
+  const handleConnectBrokerage = async () => {
+    if (!session) return;
+    setConnecting(true);
+    try {
+      // Register user first, then get redirect
+      await supabase.functions.invoke("snaptrade-auth", {
+        body: { action: "register" },
+      });
+
+      const { data, error } = await supabase.functions.invoke("snaptrade-auth", {
+        body: {
+          action: "connect",
+          redirectUri: window.location.origin + "/settings",
+        },
+      });
+
+      if (error) throw error;
+      if (data?.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      }
+    } catch (err) {
+      console.error("Connect error:", err);
+      setSyncResult("Failed to connect. Please try again.");
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleSync = async () => {
+    if (!session) return;
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("snaptrade-sync", {
+        body: { leagueId: "current" }, // TODO: use actual league ID from context
+      });
+      if (error) throw error;
+      setSyncResult(`Synced ${data?.synced || 0} holdings from your brokerage.`);
+    } catch (err) {
+      console.error("Sync error:", err);
+      setSyncResult("Sync failed. Make sure you've connected a brokerage first.");
+    } finally {
+      setSyncing(false);
+    }
   };
 
   return (
@@ -88,6 +139,42 @@ const SettingsPage = () => {
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Brokerage Connection */}
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+            <Link2 className="h-4 w-4 text-primary" />
+            <h3 className="font-display text-sm font-bold text-foreground">BROKERAGE SYNC</h3>
+          </div>
+          <div className="p-4 space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Connect your Robinhood account to automatically sync your portfolio holdings.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleConnectBrokerage}
+                disabled={connecting}
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:bg-primary/80 disabled:opacity-50"
+              >
+                {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                {connecting ? "Connecting…" : "Connect Robinhood"}
+              </button>
+              <button
+                onClick={handleSync}
+                disabled={syncing}
+                className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-foreground active:bg-accent disabled:opacity-50"
+              >
+                {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Sync
+              </button>
+            </div>
+            {syncResult && (
+              <p className={`text-xs ${syncResult.includes("Failed") || syncResult.includes("failed") ? "text-loss" : "text-gain"}`}>
+                {syncResult}
+              </p>
+            )}
           </div>
         </div>
 
