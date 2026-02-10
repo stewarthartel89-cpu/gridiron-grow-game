@@ -3,16 +3,40 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const SNAPTRADE_API = "https://api.snaptrade.com/api/v1";
 
-async function snaptradeRequest(method: string, path: string, body?: Record<string, unknown>) {
+async function snaptradeRequest(
+  method: string,
+  path: string,
+  queryParams: Record<string, string> = {},
+  body?: Record<string, unknown>
+) {
   const clientId = Deno.env.get("SNAPTRADE_CLIENT_ID")!;
   const consumerKey = Deno.env.get("SNAPTRADE_CONSUMER_KEY")!;
-
   const timestamp = Math.floor(Date.now() / 1000).toString();
+
+  const allParams = { clientId, timestamp, ...queryParams };
+  const queryString = new URLSearchParams(allParams).toString();
+
+  const requestData = body || {};
+  const requestPath = `/api/v1${path}`;
+
+  function sortedStringify(obj: unknown): string {
+    if (obj === null || typeof obj !== "object" || Array.isArray(obj)) {
+      return JSON.stringify(obj);
+    }
+    const sorted = Object.keys(obj as Record<string, unknown>).sort().map(
+      k => `${JSON.stringify(k)}:${sortedStringify((obj as Record<string, unknown>)[k])}`
+    );
+    return `{${sorted.join(",")}}`;
+  }
+
+  const sigObject = { content: requestData, path: requestPath, query: queryString };
+  const sigContent = sortedStringify(sigObject);
+
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
@@ -21,19 +45,17 @@ async function snaptradeRequest(method: string, path: string, body?: Record<stri
     false,
     ["sign"]
   );
-  const dataToSign = `/api/v1${path}${timestamp}`;
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(dataToSign));
-  const sigHex = Array.from(new Uint8Array(signature))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
+  const sigBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(sigContent));
+  const sigBase64 = btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
 
-  const res = await fetch(`${SNAPTRADE_API}${path}`, {
+  const url = `${SNAPTRADE_API}${path}?${queryString}`;
+  console.log(`SnapTrade ${method} ${path}`);
+
+  const res = await fetch(url, {
     method,
     headers: {
       "Content-Type": "application/json",
-      "clientId": clientId,
-      "Signature": sigHex,
-      "timestamp": timestamp,
+      "Signature": sigBase64,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -41,13 +63,12 @@ async function snaptradeRequest(method: string, path: string, body?: Record<stri
   const data = await res.json();
   if (!res.ok) {
     console.error("SnapTrade API error:", res.status, JSON.stringify(data));
-    throw new Error(`SnapTrade API error [${res.status}]: ${JSON.stringify(data)}`);
+    throw new Error(`SNAPTRADE_API_ERROR:${res.status}`);
   }
   return data;
 }
 
-// Simple sector mapping based on common stock sectors
-function guessSector(symbol: string, description?: string): string {
+function guessSector(symbol: string, _description?: string): string {
   const techSymbols = ["AAPL", "MSFT", "GOOGL", "GOOG", "META", "NVDA", "AMD", "PLTR", "SOFI"];
   const healthSymbols = ["JNJ", "UNH", "PFE", "XLV", "MRNA"];
   const energySymbols = ["XOM", "XLE", "CVX", "NEE"];
@@ -68,8 +89,11 @@ function guessSector(symbol: string, description?: string): string {
   if (finSymbols.includes(s)) return "Financials";
   if (intlSymbols.includes(s)) return "International";
   if (realEstateSymbols.includes(s)) return "Real Estate";
-  return "Index/ETF"; // default fallback
+  return "Index/ETF";
 }
+
+// UUID v4 format validation
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -82,20 +106,43 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Missing authorization header");
+    if (!authHeader) throw new Error("Unauthorized");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) throw new Error("Unauthorized");
 
     const { leagueId } = await req.json();
-    if (!leagueId) throw new Error("leagueId is required");
 
-    // 1. Get user's connected accounts
+    // Validate leagueId format
+    if (!leagueId || typeof leagueId !== "string") {
+      throw new Error("Invalid leagueId");
+    }
+
+    // For non-UUID "current" placeholder, we need a real league ID
+    if (leagueId !== "current" && !UUID_REGEX.test(leagueId)) {
+      throw new Error("Invalid leagueId format");
+    }
+
+    // Verify user is a member of the league
+    if (leagueId !== "current") {
+      const { data: membership } = await supabase
+        .from("league_members")
+        .select("id")
+        .eq("league_id", leagueId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (!membership) {
+        throw new Error("Not a member of this league");
+      }
+    }
+
+    // Get user's connected accounts
     const accounts = await snaptradeRequest("GET", `/accounts/${user.id}`);
     
     if (!accounts || accounts.length === 0) {
-      return new Response(JSON.stringify({ error: "No connected brokerage accounts found" }), {
+      return new Response(JSON.stringify({ error: "No connected brokerage accounts found. Please connect your brokerage first." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -104,7 +151,6 @@ serve(async (req) => {
     let totalSynced = 0;
 
     for (const account of accounts) {
-      // 2. Get positions for each account
       const positions = await snaptradeRequest(
         "GET",
         `/accounts/${user.id}/${account.id}/positions`
@@ -112,12 +158,10 @@ serve(async (req) => {
 
       if (!positions || positions.length === 0) continue;
 
-      // 3. Calculate total value for allocation percentages
       const totalValue = positions.reduce((sum: number, p: any) => {
         return sum + (p.units * (p.price || p.averageEntryPrice || 0));
       }, 0);
 
-      // 4. Upsert each position into holdings
       for (const pos of positions) {
         const symbol = pos.symbol?.symbol || pos.symbol || "UNKNOWN";
         const name = pos.symbol?.description || pos.symbol?.name || symbol;
@@ -160,8 +204,20 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("snaptrade-sync error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
+    
+    let userMessage = "Sync failed. Please try again.";
+    if (error instanceof Error) {
+      const msg = error.message;
+      if (msg.includes("Unauthorized")) {
+        userMessage = "Authentication failed. Please sign in again.";
+      } else if (msg.includes("Not a member")) {
+        userMessage = "You are not a member of this league.";
+      } else if (msg.includes("Invalid leagueId")) {
+        userMessage = "Invalid league specified.";
+      }
+    }
+    
+    return new Response(JSON.stringify({ error: userMessage }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
