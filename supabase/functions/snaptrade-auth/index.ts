@@ -22,12 +22,23 @@ async function snaptradeRequest(
   const allParams = { clientId, timestamp, ...queryParams };
   const queryString = new URLSearchParams(allParams).toString();
 
-  // Signature = HMAC-SHA256(consumerKey, JSON.stringify({content, path, query}))
-  // content = request body object (or empty object), path = full API path, query = query string
+  // Signature = HMAC-SHA256(consumerKey, JSON.stringify({content, path, query}, sorted keys, compact))
   const requestData = body || {};
   const requestPath = `/api/v1${path}`;
+  
+  // Must sort keys recursively to match Python's json.dumps(sort_keys=True, separators=(",",":"))
+  function sortedStringify(obj: unknown): string {
+    if (obj === null || typeof obj !== "object" || Array.isArray(obj)) {
+      return JSON.stringify(obj);
+    }
+    const sorted = Object.keys(obj as Record<string, unknown>).sort().map(
+      k => `${JSON.stringify(k)}:${sortedStringify((obj as Record<string, unknown>)[k])}`
+    );
+    return `{${sorted.join(",")}}`;
+  }
+  
   const sigObject = { content: requestData, path: requestPath, query: queryString };
-  const sigContent = JSON.stringify(sigObject);
+  const sigContent = sortedStringify(sigObject);
 
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
