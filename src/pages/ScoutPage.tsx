@@ -4,12 +4,19 @@ import PageTransition from "@/components/PageTransition";
 import { Search, TrendingUp, TrendingDown, ExternalLink, RefreshCw, AlertCircle, SlidersHorizontal, ArrowUpDown, ChevronDown } from "lucide-react";
 import { useStockQuotes, useSymbolSearch, type FormattedQuote } from "@/hooks/useFinnhub";
 
-const WATCHED_SYMBOLS = [
-  "AAPL", "NVDA", "MSFT", "AMZN", "TSLA", "GOOGL", "META", "COIN", "SOFI", "PFE", "XOM", "JPM",
-];
+// Symbol -> sector mapping
+const STOCK_SECTORS: Record<string, string> = {
+  AAPL: "Technology", NVDA: "Technology", MSFT: "Technology", GOOGL: "Technology", META: "Technology",
+  AMZN: "Consumer", TSLA: "Consumer",
+  COIN: "Crypto", SOFI: "Financials", JPM: "Financials",
+  PFE: "Healthcare", XOM: "Energy",
+};
+
+const WATCHED_SYMBOLS = Object.keys(STOCK_SECTORS);
+
+const SECTORS = ["All Sectors", "Technology", "Consumer", "Financials", "Energy", "Healthcare", "Crypto"];
 
 type SortOption = "default" | "top-gainers" | "top-losers" | "price-high" | "price-low";
-type FilterOption = "all" | "gainers" | "losers";
 
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: "default", label: "Default" },
@@ -17,12 +24,6 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "top-losers", label: "Biggest Losers" },
   { value: "price-high", label: "Price: High → Low" },
   { value: "price-low", label: "Price: Low → High" },
-];
-
-const filterOptions: { value: FilterOption; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "gainers", label: "Gainers" },
-  { value: "losers", label: "Losers" },
 ];
 
 const QuoteCard = memo(({ quote }: { quote: FormattedQuote }) => {
@@ -108,7 +109,7 @@ const ScoutPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const [symbols, setSymbols] = useState(WATCHED_SYMBOLS);
   const [sort, setSort] = useState<SortOption>("default");
-  const [filter, setFilter] = useState<FilterOption>("all");
+  const [sector, setSector] = useState("All Sectors");
   const { quotes, loading, error, refetch } = useStockQuotes(symbols);
   const { results: searchResults, search, loading: searchLoading } = useSymbolSearch();
 
@@ -120,14 +121,14 @@ const ScoutPage = () => {
   const processedQuotes = useMemo(() => {
     let result = [...quotes];
 
-    // Search filter
     if (searchInput) {
       result = result.filter((q) => q.symbol.toLowerCase().includes(searchInput.toLowerCase()));
     }
 
-    // Gainers / Losers filter
-    if (filter === "gainers") result = result.filter((q) => q.changePct > 0);
-    if (filter === "losers") result = result.filter((q) => q.changePct < 0);
+    // Sector filter
+    if (sector !== "All Sectors") {
+      result = result.filter((q) => STOCK_SECTORS[q.symbol] === sector);
+    }
 
     // Sort
     switch (sort) {
@@ -138,7 +139,7 @@ const ScoutPage = () => {
     }
 
     return result;
-  }, [quotes, searchInput, sort, filter]);
+  }, [quotes, searchInput, sort, sector]);
 
   const addSymbol = (sym: string) => {
     if (!symbols.includes(sym)) setSymbols((prev) => [...prev, sym]);
@@ -190,28 +191,21 @@ const ScoutPage = () => {
 
           {/* Filters & Sort */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex gap-1.5">
-              {filterOptions.map((f) => (
-                <button
-                  key={f.value}
-                  onClick={() => setFilter(f.value as FilterOption)}
-                  className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors ${
-                    filter === f.value ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
             <DropdownSelect
               value={sort}
               options={sortOptions}
               onChange={(v) => setSort(v as SortOption)}
               icon={ArrowUpDown}
             />
-            {(filter !== "all" || sort !== "default") && (
+            <DropdownSelect
+              value={sector}
+              options={SECTORS.map((s) => ({ value: s, label: s }))}
+              onChange={setSector}
+              icon={SlidersHorizontal}
+            />
+            {(sector !== "All Sectors" || sort !== "default") && (
               <button
-                onClick={() => { setFilter("all"); setSort("default"); }}
+                onClick={() => { setSector("All Sectors"); setSort("default"); }}
                 className="text-[10px] font-semibold text-primary"
               >
                 Clear
