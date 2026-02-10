@@ -1,11 +1,20 @@
+import { useNavigate } from "react-router-dom";
 import LeagueHeader from "@/components/LeagueHeader";
 import PageTransition from "@/components/PageTransition";
+import { useAuth } from "@/contexts/AuthContext";
 import { leagueSettings, leagueMembers } from "@/data/mockData";
 import { Settings as SettingsIcon, Crown, Shield, DollarSign, Calendar, Users, ChevronRight, Trophy, BarChart3, LogOut } from "lucide-react";
 
 const SettingsPage = () => {
   const s = leagueSettings;
   const me = leagueMembers[0];
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
 
   return (
     <PageTransition>
@@ -87,10 +96,13 @@ const SettingsPage = () => {
           INVITE PLAYERS
         </button>
 
-        {/* Leave League */}
-        <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-loss/30 py-3 text-sm font-semibold text-loss active:bg-loss/10">
+        {/* Sign Out */}
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-loss/30 py-3 text-sm font-semibold text-loss active:bg-loss/10"
+        >
           <LogOut className="h-4 w-4" />
-          Leave League
+          Sign Out
         </button>
       </main>
     </div>

@@ -14,7 +14,7 @@ const BottomNav = () => {
   const navigate = useNavigate();
 
   // Hide on team detail pages
-  if (location.pathname.startsWith("/team/")) return null;
+  if (location.pathname.startsWith("/team/") || location.pathname === "/auth") return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-lg safe-area-bottom">
