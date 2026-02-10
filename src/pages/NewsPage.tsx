@@ -1,127 +1,143 @@
 import { useState, memo } from "react";
 import LeagueHeader from "@/components/LeagueHeader";
 import PageTransition from "@/components/PageTransition";
-import { Newspaper, Clock, TrendingUp, Flame, BarChart3, DollarSign } from "lucide-react";
+import { Newspaper, Clock, RefreshCw, ExternalLink, AlertCircle } from "lucide-react";
+import { useMarketNews, type FormattedArticle } from "@/hooks/useFinnhub";
 
-type NewsSection = "top" | "trending" | "crypto" | "earnings";
+type NewsCategory = "general" | "forex" | "crypto" | "merger";
 
-interface Article {
-  id: string;
-  headline: string;
-  source: string;
-  timeAgo: string;
-  tickers: string[];
-  section: NewsSection;
-  summary?: string;
-  reads: number;
+const categoryConfig: { key: NewsCategory; label: string }[] = [
+  { key: "general", label: "General" },
+  { key: "crypto", label: "Crypto" },
+  { key: "forex", label: "Forex" },
+  { key: "merger", label: "M&A" },
+];
+
+function timeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
-const mockArticles: Article[] = [
-  { id: "n1", headline: "S&P 500 Hits New All-Time High as Tech Rally Extends", source: "Reuters", timeAgo: "12m ago", tickers: ["SPY", "QQQ", "VOO"], section: "top", summary: "Broad market strength driven by AI optimism and cooling inflation data.", reads: 45200 },
-  { id: "n2", headline: "NVIDIA Q4 Earnings Crush Estimates, Revenue Up 265%", source: "CNBC", timeAgo: "1h ago", tickers: ["NVDA"], section: "earnings", summary: "Data center revenue surpasses expectations as AI infrastructure spending accelerates.", reads: 89300 },
-  { id: "n3", headline: "Bitcoin Surges Past $52K After Spot ETF Inflows Hit Record", source: "CoinDesk", timeAgo: "2h ago", tickers: ["BTC", "IBIT", "COIN"], section: "crypto", summary: "Institutional demand through new spot Bitcoin ETFs driving historic inflows.", reads: 62100 },
-  { id: "n4", headline: "Fed Signals Rate Cuts Could Begin This Summer", source: "Bloomberg", timeAgo: "3h ago", tickers: ["SPY", "TLT", "BND"], section: "top", summary: "Multiple Fed governors suggest cooling inflation may warrant policy easing.", reads: 71400 },
-  { id: "n5", headline: "Tesla Announces New Affordable Model, Stock Jumps 8%", source: "MarketWatch", timeAgo: "4h ago", tickers: ["TSLA"], section: "trending", summary: "Sub-$30K vehicle expected to compete directly with mass-market EVs.", reads: 53800 },
-  { id: "n6", headline: "Apple Vision Pro Sales Exceed Analyst Expectations", source: "The Verge", timeAgo: "5h ago", tickers: ["AAPL"], section: "trending", summary: "Spatial computing device sees strong enterprise adoption despite premium pricing.", reads: 38900 },
-  { id: "n7", headline: "Ethereum Upgrade 'Dencun' Goes Live, Gas Fees Drop 90%", source: "CoinDesk", timeAgo: "6h ago", tickers: ["ETH", "COIN"], section: "crypto", summary: "Proto-danksharding dramatically reduces Layer 2 transaction costs.", reads: 41200 },
-  { id: "n8", headline: "Pfizer Reports Mixed Q4, Guides Lower for 2025", source: "Reuters", timeAgo: "7h ago", tickers: ["PFE"], section: "earnings", summary: "Post-COVID revenue normalization weighs on outlook despite pipeline progress.", reads: 28500 },
-  { id: "n9", headline: "Oil Prices Spike on Middle East Supply Concerns", source: "Bloomberg", timeAgo: "8h ago", tickers: ["XLE", "XOM", "CVX"], section: "top", summary: "Geopolitical tensions and shipping disruptions push crude above $80.", reads: 34600 },
-  { id: "n10", headline: "SoFi Reports First Profitable Quarter, Stock Soars", source: "CNBC", timeAgo: "10h ago", tickers: ["SOFI"], section: "trending", summary: "Fintech company achieves profitability milestone ahead of schedule.", reads: 47100 },
-  { id: "n11", headline: "Solana Network Activity Hits New Record, Surpasses Ethereum Transactions", source: "The Block", timeAgo: "11h ago", tickers: ["SOL"], section: "crypto", reads: 29800 },
-  { id: "n12", headline: "Microsoft Azure Revenue Accelerates on AI Workloads", source: "MarketWatch", timeAgo: "14h ago", tickers: ["MSFT"], section: "earnings", summary: "Cloud segment growth re-accelerates as enterprises adopt Copilot.", reads: 52300 },
-];
-
-const sectionConfig: { key: NewsSection; label: string; icon: typeof Flame }[] = [
-  { key: "top", label: "Top Stories", icon: Flame },
-  { key: "trending", label: "Trending Stocks", icon: TrendingUp },
-  { key: "crypto", label: "Crypto Highlights", icon: DollarSign },
-  { key: "earnings", label: "Earnings & Company", icon: BarChart3 },
-];
-
-const formatReads = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : `${n}`;
-
-const ArticleCard = memo(({ article }: { article: Article }) => (
-  <div className="rounded-xl border border-border bg-card p-4">
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex-1">
-        <p className="text-sm font-semibold text-foreground leading-snug">{article.headline}</p>
+const ArticleCard = memo(({ article }: { article: FormattedArticle }) => (
+  <a
+    href={article.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/30"
+  >
+    <div className="flex items-start gap-3">
+      {article.imageUrl && (
+        <img
+          src={article.imageUrl}
+          alt=""
+          className="h-16 w-24 shrink-0 rounded-lg object-cover bg-secondary"
+          loading="lazy"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        />
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-foreground leading-snug line-clamp-2">{article.headline}</p>
         <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
           <span className="font-medium text-foreground/70">{article.source}</span>
           <span>·</span>
-          <span className="flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" />{article.timeAgo}</span>
-          <span>·</span>
-          <span>{formatReads(article.reads)} reads</span>
+          <span className="flex items-center gap-0.5">
+            <Clock className="h-2.5 w-2.5" />
+            {timeAgo(article.publishedAt)}
+          </span>
         </div>
       </div>
+      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground mt-1" />
     </div>
 
     {article.summary && (
-      <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">{article.summary}</p>
+      <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{article.summary}</p>
     )}
 
-    <div className="mt-2.5 flex flex-wrap gap-1.5">
-      {article.tickers.map(t => (
-        <span key={t} className="rounded bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">{t}</span>
-      ))}
-    </div>
-  </div>
+    {article.relatedTickers.length > 0 && (
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        {article.relatedTickers.slice(0, 5).map((t) => (
+          <span key={t} className="rounded bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">{t}</span>
+        ))}
+      </div>
+    )}
+  </a>
 ));
 ArticleCard.displayName = "ArticleCard";
 
 const NewsPage = () => {
-  const [activeSection, setActiveSection] = useState<NewsSection | "all">("all");
-
-  const articles = activeSection === "all" ? mockArticles : mockArticles.filter(a => a.section === activeSection);
+  const [category, setCategory] = useState<NewsCategory>("general");
+  const { articles, loading, error, refetch } = useMarketNews(category);
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-background pb-24">
-      <LeagueHeader />
-      <main className="mx-auto max-w-2xl px-4 py-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Newspaper className="h-5 w-5 text-primary" />
-            Market News
-          </h2>
-          <span className="text-[10px] text-muted-foreground">Updated live</span>
-        </div>
-
-        {/* Section Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          <button
-            onClick={() => setActiveSection("all")}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors ${
-              activeSection === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-            }`}
-          >
-            All
-          </button>
-          {sectionConfig.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setActiveSection(key)}
-              className={`flex shrink-0 items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors ${
-                activeSection === key ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-              }`}
-            >
-              <Icon className="h-3 w-3" />
-              {label}
+      <div className="min-h-screen bg-background pb-24">
+        <LeagueHeader />
+        <main className="mx-auto max-w-2xl px-4 py-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Newspaper className="h-5 w-5 text-primary" />
+              Market News
+            </h2>
+            <button onClick={refetch} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary">
+              <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+              {loading ? "Updating..." : "Refresh"}
             </button>
-          ))}
-        </div>
+          </div>
 
-        {/* Articles */}
-        <div className="space-y-2.5">
-          {articles.map(article => (
-            <ArticleCard key={article.id} article={article} />
-          ))}
-        </div>
+          {/* Category Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {categoryConfig.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setCategory(key)}
+                className={`shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+                  category === key ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
-        <p className="text-center text-[9px] text-muted-foreground py-4">
-          For informational purposes only. Not financial advice.
-        </p>
-      </main>
-    </div>
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg border border-loss/30 bg-loss/10 p-3 text-[11px] text-loss">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {/* Articles */}
+          {loading && articles.length === 0 ? (
+            <div className="space-y-2.5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-28 animate-pulse rounded-xl bg-secondary" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {articles.map((article) => (
+                <ArticleCard key={article.id} article={article} />
+              ))}
+              {articles.length === 0 && !loading && (
+                <div className="py-12 text-center">
+                  <Newspaper className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No news articles available</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <p className="text-center text-[9px] text-muted-foreground py-4">
+            Live data from Finnhub. For informational purposes only. Not financial advice.
+          </p>
+        </main>
+      </div>
     </PageTransition>
   );
 };
