@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const SNAPTRADE_API = "https://api.snaptrade.com/api/v1";
@@ -11,21 +11,24 @@ const SNAPTRADE_API = "https://api.snaptrade.com/api/v1";
 async function snaptradeRequest(
   method: string,
   path: string,
+  queryParams: Record<string, string> = {},
   body?: Record<string, unknown>
 ) {
   const clientId = Deno.env.get("SNAPTRADE_CLIENT_ID")!;
   const consumerKey = Deno.env.get("SNAPTRADE_CONSUMER_KEY")!;
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "clientId": clientId,
-  };
-
-  // SnapTrade uses a signature-based auth — for partner-level keys,
-  // the consumer key is sent as the Signature header
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  
-  // Build signature using HMAC
+
+  // Build query string with clientId and timestamp
+  const allParams = { clientId, timestamp, ...queryParams };
+  const queryString = new URLSearchParams(allParams).toString();
+
+  // Signature = HMAC-SHA256(consumerKey, JSON.stringify({content, path, query}))
+  // content = request body object (or empty object), path = full API path, query = query string
+  const requestData = body || {};
+  const requestPath = `/api/v1${path}`;
+  const sigObject = { content: requestData, path: requestPath, query: queryString };
+  const sigContent = JSON.stringify(sigObject);
+
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
@@ -34,20 +37,19 @@ async function snaptradeRequest(
     false,
     ["sign"]
   );
-  
-  const dataToSign = `/api/v1${path}${timestamp}`;
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(dataToSign));
-  const sigHex = Array.from(new Uint8Array(signature))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
+  const sigBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(sigContent));
+  // SnapTrade expects base64-encoded signature
+  const sigBase64 = btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
 
-  headers["Signature"] = sigHex;
-  headers["timestamp"] = timestamp;
+  const url = `${SNAPTRADE_API}${path}?${queryString}`;
+  console.log(`SnapTrade ${method} ${path} query=${queryString}`);
 
-  const url = `${SNAPTRADE_API}${path}`;
   const res = await fetch(url, {
     method,
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+      "Signature": sigBase64,
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
 
@@ -69,7 +71,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify user auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Missing authorization header");
 
@@ -77,13 +78,15 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { action, redirectUri } = await req.json();
+    const { action, redirectUri, userSecret } = await req.json();
 
     if (action === "register") {
-      // Register user with SnapTrade
-      const result = await snaptradeRequest("POST", "/snapTrade/registerUser", {
-        userId: user.id,
-      });
+      const result = await snaptradeRequest(
+        "POST",
+        "/snapTrade/registerUser",
+        {},
+        { userId: user.id }
+      );
 
       return new Response(JSON.stringify({ success: true, userSecret: result.userSecret }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -91,10 +94,12 @@ serve(async (req) => {
     }
 
     if (action === "connect") {
-      // Generate redirect URL for SnapTrade connection portal
+      if (!userSecret) throw new Error("userSecret is required for connect action");
+
       const result = await snaptradeRequest(
         "POST",
-        `/snapTrade/login/${user.id}`,
+        "/snapTrade/login",
+        { userId: user.id, userSecret },
         {
           broker: "ROBINHOOD",
           immediateRedirect: true,
@@ -103,9 +108,10 @@ serve(async (req) => {
         }
       );
 
-      return new Response(JSON.stringify({ redirectUrl: result.redirectURI || result.loginLink }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ redirectUrl: result.redirectURI || result.loginLink }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     throw new Error(`Unknown action: ${action}`);

@@ -24,15 +24,22 @@ const SettingsPage = () => {
   const handleConnectBrokerage = async () => {
     if (!session) return;
     setConnecting(true);
+    setSyncResult(null);
     try {
-      // Register user first, then get redirect
-      await supabase.functions.invoke("snaptrade-auth", {
+      // Step 1: Register user and get userSecret
+      const { data: regData, error: regError } = await supabase.functions.invoke("snaptrade-auth", {
         body: { action: "register" },
       });
 
+      if (regError) throw regError;
+      const userSecret = regData?.userSecret;
+      if (!userSecret) throw new Error("Failed to get user secret from registration");
+
+      // Step 2: Get connection portal redirect URL
       const { data, error } = await supabase.functions.invoke("snaptrade-auth", {
         body: {
           action: "connect",
+          userSecret,
           redirectUri: window.location.origin + "/settings",
         },
       });
@@ -40,10 +47,13 @@ const SettingsPage = () => {
       if (error) throw error;
       if (data?.redirectUrl) {
         window.location.href = data.redirectUrl;
+      } else {
+        throw new Error("No redirect URL returned");
       }
     } catch (err) {
       console.error("Connect error:", err);
-      setSyncResult("Failed to connect. Please try again.");
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setSyncResult(`Failed to connect: ${msg}`);
     } finally {
       setConnecting(false);
     }
