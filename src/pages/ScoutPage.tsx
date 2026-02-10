@@ -1,11 +1,28 @@
-import { useState, memo, useEffect } from "react";
+import { useState, useEffect, memo, useMemo } from "react";
 import LeagueHeader from "@/components/LeagueHeader";
 import PageTransition from "@/components/PageTransition";
-import { Search, TrendingUp, TrendingDown, ExternalLink, RefreshCw, AlertCircle } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, ExternalLink, RefreshCw, AlertCircle, SlidersHorizontal, ArrowUpDown, ChevronDown } from "lucide-react";
 import { useStockQuotes, useSymbolSearch, type FormattedQuote } from "@/hooks/useFinnhub";
 
 const WATCHED_SYMBOLS = [
   "AAPL", "NVDA", "MSFT", "AMZN", "TSLA", "GOOGL", "META", "COIN", "SOFI", "PFE", "XOM", "JPM",
+];
+
+type SortOption = "default" | "top-gainers" | "top-losers" | "price-high" | "price-low";
+type FilterOption = "all" | "gainers" | "losers";
+
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "top-gainers", label: "Top Gainers" },
+  { value: "top-losers", label: "Biggest Losers" },
+  { value: "price-high", label: "Price: High → Low" },
+  { value: "price-low", label: "Price: Low → High" },
+];
+
+const filterOptions: { value: FilterOption; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "gainers", label: "Gainers" },
+  { value: "losers", label: "Losers" },
 ];
 
 const QuoteCard = memo(({ quote }: { quote: FormattedQuote }) => {
@@ -49,9 +66,49 @@ const QuoteCard = memo(({ quote }: { quote: FormattedQuote }) => {
 });
 QuoteCard.displayName = "QuoteCard";
 
+const DropdownSelect = ({ value, options, onChange, icon: Icon }: {
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void;
+  icon: typeof ArrowUpDown;
+}) => {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-semibold text-foreground"
+      >
+        <Icon className="h-3 w-3 text-muted-foreground" />
+        {selected?.label}
+        <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-[160px] rounded-lg border border-border bg-card shadow-lg">
+          {options.map((o) => (
+            <button
+              key={o.value}
+              onClick={() => { onChange(o.value); setOpen(false); }}
+              className={`block w-full px-3 py-2 text-left text-[11px] hover:bg-secondary ${
+                o.value === value ? "font-bold text-primary" : "text-foreground"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ScoutPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const [symbols, setSymbols] = useState(WATCHED_SYMBOLS);
+  const [sort, setSort] = useState<SortOption>("default");
+  const [filter, setFilter] = useState<FilterOption>("all");
   const { quotes, loading, error, refetch } = useStockQuotes(symbols);
   const { results: searchResults, search, loading: searchLoading } = useSymbolSearch();
 
@@ -60,14 +117,31 @@ const ScoutPage = () => {
     return () => clearTimeout(timeout);
   }, [searchInput, search]);
 
-  const filteredQuotes = searchInput
-    ? quotes.filter((q) => q.symbol.toLowerCase().includes(searchInput.toLowerCase()))
-    : quotes;
+  const processedQuotes = useMemo(() => {
+    let result = [...quotes];
+
+    // Search filter
+    if (searchInput) {
+      result = result.filter((q) => q.symbol.toLowerCase().includes(searchInput.toLowerCase()));
+    }
+
+    // Gainers / Losers filter
+    if (filter === "gainers") result = result.filter((q) => q.changePct > 0);
+    if (filter === "losers") result = result.filter((q) => q.changePct < 0);
+
+    // Sort
+    switch (sort) {
+      case "top-gainers": result.sort((a, b) => b.changePct - a.changePct); break;
+      case "top-losers": result.sort((a, b) => a.changePct - b.changePct); break;
+      case "price-high": result.sort((a, b) => b.price - a.price); break;
+      case "price-low": result.sort((a, b) => a.price - b.price); break;
+    }
+
+    return result;
+  }, [quotes, searchInput, sort, filter]);
 
   const addSymbol = (sym: string) => {
-    if (!symbols.includes(sym)) {
-      setSymbols((prev) => [...prev, sym]);
-    }
+    if (!symbols.includes(sym)) setSymbols((prev) => [...prev, sym]);
     setSearchInput("");
   };
 
@@ -98,7 +172,7 @@ const ScoutPage = () => {
               className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
             {searchInput && searchResults.length > 0 && (
-              <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-xl border border-border bg-card p-2 shadow-lg">
+              <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-border bg-card p-2 shadow-lg">
                 {searchResults.map((r) => (
                   <button
                     key={r.symbol}
@@ -111,6 +185,37 @@ const ScoutPage = () => {
                 ))}
                 {searchLoading && <p className="px-3 py-2 text-[11px] text-muted-foreground">Searching...</p>}
               </div>
+            )}
+          </div>
+
+          {/* Filters & Sort */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1.5">
+              {filterOptions.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => setFilter(f.value as FilterOption)}
+                  className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+                    filter === f.value ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <DropdownSelect
+              value={sort}
+              options={sortOptions}
+              onChange={(v) => setSort(v as SortOption)}
+              icon={ArrowUpDown}
+            />
+            {(filter !== "all" || sort !== "default") && (
+              <button
+                onClick={() => { setFilter("all"); setSort("default"); }}
+                className="text-[10px] font-semibold text-primary"
+              >
+                Clear
+              </button>
             )}
           </div>
 
@@ -130,13 +235,13 @@ const ScoutPage = () => {
             </div>
           ) : (
             <div className="space-y-2.5">
-              {filteredQuotes.map((quote) => (
+              {processedQuotes.map((quote) => (
                 <QuoteCard key={quote.symbol} quote={quote} />
               ))}
-              {filteredQuotes.length === 0 && (
+              {processedQuotes.length === 0 && (
                 <div className="py-12 text-center">
                   <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No stocks match your search</p>
+                  <p className="text-sm text-muted-foreground">No stocks match your filters</p>
                 </div>
               )}
             </div>
