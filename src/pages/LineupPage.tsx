@@ -1,6 +1,7 @@
 import { useState, memo } from "react";
 import { leagueMembers, Sector } from "@/data/mockData";
 import LeagueHeader from "@/components/LeagueHeader";
+import PageTransition from "@/components/PageTransition";
 import { Target, Shield, AlertTriangle, Zap, ArrowRightLeft, Info } from "lucide-react";
 
 const SECTORS: Sector[] = ["Tech", "Healthcare", "Energy", "Financials", "Consumer", "Index/ETF", "International", "Real Estate", "Crypto", "Industrials"];
@@ -67,6 +68,7 @@ const LineupPage = () => {
   const benchHoldings = me.holdings.filter(h => !h.isActive);
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-24">
       <LeagueHeader />
       <main className="mx-auto max-w-2xl px-4 py-5 space-y-5">
@@ -194,6 +196,7 @@ const LineupPage = () => {
         </div>
       </main>
     </div>
+    </PageTransition>
   );
 };
 

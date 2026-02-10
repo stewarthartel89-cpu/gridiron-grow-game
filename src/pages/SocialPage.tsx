@@ -1,5 +1,6 @@
 import { useState } from "react";
 import LeagueHeader from "@/components/LeagueHeader";
+import PageTransition from "@/components/PageTransition";
 import { activityFeed, ActivityItem } from "@/data/mockData";
 import { MessageCircle, Send, TrendingUp, Award, DollarSign, AlertTriangle, Repeat } from "lucide-react";
 
@@ -30,6 +31,7 @@ const SocialPage = () => {
     : activityFeed.filter(a => a.type !== "trash_talk");
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-24">
       <LeagueHeader />
       <main className="mx-auto max-w-2xl px-4 py-5 space-y-4">
@@ -93,6 +95,7 @@ const SocialPage = () => {
         </div>
       </main>
     </div>
+    </PageTransition>
   );
 };
 

@@ -1,5 +1,6 @@
 import { useState, memo } from "react";
 import LeagueHeader from "@/components/LeagueHeader";
+import PageTransition from "@/components/PageTransition";
 import { Search, TrendingUp, TrendingDown, Activity, Shield, Globe, BarChart3, Zap, DollarSign, ExternalLink, Filter } from "lucide-react";
 
 type FilterCategory = "movement" | "strategy" | "sector" | "cap";
@@ -67,6 +68,7 @@ const ScoutPage = () => {
   });
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-24">
       <LeagueHeader />
       <main className="mx-auto max-w-2xl px-4 py-5 space-y-4">
@@ -203,6 +205,7 @@ const ScoutPage = () => {
         </p>
       </main>
     </div>
+    </PageTransition>
   );
 };
 
