@@ -1,8 +1,21 @@
 import { memo, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { leagueMembers, LeagueMember } from "@/data/mockData";
-import { ArrowLeft, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { leagueMembers, LeagueMember, Sector } from "@/data/mockData";
+import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Zap, Shield, AlertTriangle } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+
+const SECTOR_COLORS: Record<Sector, string> = {
+  "Tech": "bg-[hsl(200,70%,50%)]",
+  "Healthcare": "bg-[hsl(340,70%,55%)]",
+  "Energy": "bg-[hsl(35,90%,55%)]",
+  "Financials": "bg-[hsl(220,60%,55%)]",
+  "Consumer": "bg-[hsl(280,60%,55%)]",
+  "Index/ETF": "bg-primary",
+  "International": "bg-[hsl(170,60%,45%)]",
+  "Real Estate": "bg-[hsl(25,80%,50%)]",
+  "Crypto": "bg-[hsl(45,90%,50%)]",
+  "Industrials": "bg-[hsl(0,0%,55%)]",
+};
 
 const GrowthChart = memo(({ data }: { data: { week: string; growth: number }[] }) => (
   <div className="h-40">
@@ -40,14 +53,26 @@ const HoldingsList = memo(({ member }: { member: LeagueMember }) => (
       {member.holdings.map((h) => {
         const gainPct = ((h.currentPrice - h.avgCost) / h.avgCost) * 100;
         const isUp = gainPct >= 0;
+        const isFatigued = h.weeksHeld >= 10;
         return (
           <div key={h.symbol} className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary font-display text-[10px] font-bold text-secondary-foreground">
-                {h.symbol}
+              <div className="relative">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary font-display text-[10px] font-bold text-secondary-foreground">
+                  {h.symbol}
+                </div>
+                {isFatigued && (
+                  <div className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-warning text-[7px]">
+                    😴
+                  </div>
+                )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">{h.symbol}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-foreground">{h.symbol}</p>
+                  <span className={`rounded px-1 py-0.5 text-[8px] font-bold ${SECTOR_COLORS[h.sector]} text-white`}>{h.sector}</span>
+                  {!h.isActive && <span className="rounded px-1 py-0.5 text-[8px] font-bold bg-secondary text-muted-foreground">BENCH</span>}
+                </div>
                 <p className="text-[11px] text-muted-foreground">{h.name}</p>
               </div>
             </div>
@@ -85,6 +110,7 @@ const TeamDetail = () => {
 
   const totalReturn = ((member.currentValue - member.totalInvested) / member.totalInvested) * 100;
   const totalGain = member.currentValue - member.totalInvested;
+  const mod = member.gameModifiers;
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,19 +122,37 @@ const TeamDetail = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-display text-sm font-bold text-primary-foreground">
-              {member.avatar}
+          <div className="flex items-center gap-2.5 flex-1">
+            <div className="relative">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-display text-sm font-bold text-primary-foreground">
+                {member.avatar}
+              </div>
+              <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-bonus text-[8px] font-bold text-bonus-foreground">
+                {member.level}
+              </div>
             </div>
             <div>
               <h1 className="text-base font-bold text-foreground">{member.teamName}</h1>
               <p className="text-xs text-muted-foreground">{member.name}</p>
             </div>
           </div>
+          <div className="flex items-center gap-1 rounded-full bg-xp/15 px-2 py-1">
+            <Zap className="h-3 w-3 text-xp" />
+            <span className="text-[10px] font-bold text-xp">{member.xp.toLocaleString()}</span>
+          </div>
         </div>
       </header>
 
       <main className="px-4 py-5 space-y-5">
+        {/* Badges */}
+        {member.badges.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {member.badges.map(b => (
+              <span key={b} className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-foreground">{b}</span>
+            ))}
+          </div>
+        )}
+
         {/* Portfolio Value Card */}
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">Portfolio Value</p>
@@ -125,21 +169,46 @@ const TeamDetail = () => {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-2.5">
-          <div className="rounded-xl border border-border bg-card p-3 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Record</p>
-            <p className="mt-1 font-display text-lg font-bold text-foreground">{member.record.wins}-{member.record.losses}</p>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="rounded-xl border border-border bg-card p-2.5 text-center">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Record</p>
+            <p className="mt-0.5 font-display text-base font-bold text-foreground">{member.record.wins}-{member.record.losses}</p>
           </div>
-          <div className="rounded-xl border border-border bg-card p-3 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">This Week</p>
-            <p className={`mt-1 font-display text-lg font-bold ${member.weeklyGrowthPct >= 0 ? "text-gain" : "text-loss"}`}>
+          <div className="rounded-xl border border-border bg-card p-2.5 text-center">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">This Week</p>
+            <p className={`mt-0.5 font-display text-base font-bold ${member.weeklyGrowthPct >= 0 ? "text-gain" : "text-loss"}`}>
               {member.weeklyGrowthPct >= 0 ? "+" : ""}{member.weeklyGrowthPct.toFixed(1)}%
             </p>
           </div>
-          <div className="rounded-xl border border-border bg-card p-3 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Streak</p>
-            <p className={`mt-1 font-display text-lg font-bold ${member.streak.startsWith("W") ? "text-gain" : "text-loss"}`}>{member.streak}</p>
+          <div className="rounded-xl border border-border bg-card p-2.5 text-center">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Streak</p>
+            <p className={`mt-0.5 font-display text-base font-bold ${member.streak.startsWith("W") ? "text-gain" : "text-loss"}`}>{member.streak}</p>
           </div>
+          <div className="rounded-xl border border-border bg-card p-2.5 text-center">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Multi</p>
+            <p className={`mt-0.5 font-display text-base font-bold ${mod.totalMultiplier >= 1 ? "text-gain" : "text-warning"}`}>{mod.totalMultiplier.toFixed(2)}x</p>
+          </div>
+        </div>
+
+        {/* Diversity Score */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Shield className={`h-4 w-4 ${mod.diversityScore >= 60 ? "text-gain" : "text-warning"}`} />
+              <h2 className="text-sm font-bold text-foreground">Diversity Score</h2>
+            </div>
+            <span className={`font-display text-lg font-bold ${mod.diversityScore >= 80 ? "text-gain" : mod.diversityScore >= 60 ? "text-warning" : "text-loss"}`}>
+              {mod.diversityScore}/100
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-secondary overflow-hidden">
+            <div className={`h-full rounded-full ${mod.diversityScore >= 80 ? "bg-gain" : mod.diversityScore >= 60 ? "bg-warning" : "bg-loss"}`} style={{ width: `${mod.diversityScore}%` }} />
+          </div>
+          {mod.diversityScore < 60 && (
+            <p className="mt-2 flex items-center gap-1 text-[11px] text-warning">
+              <AlertTriangle className="h-3 w-3" /> 0.9x penalty active — diversify to remove
+            </p>
+          )}
         </div>
 
         {/* Chart */}
@@ -151,25 +220,21 @@ const TeamDetail = () => {
         {/* Holdings */}
         <HoldingsList member={member} />
 
-        {/* Allocation */}
+        {/* Allocation by Sector */}
         <div className="rounded-xl border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-bold text-foreground">Allocation</h2>
+          <h2 className="mb-3 text-sm font-bold text-foreground">Sector Allocation</h2>
           <div className="flex h-3 overflow-hidden rounded-full">
-            {member.holdings.map((h, i) => {
-              const colors = ["bg-primary", "bg-[hsl(200,70%,50%)]", "bg-[hsl(35,90%,55%)]", "bg-[hsl(280,60%,55%)]"];
-              return <div key={h.symbol} className={colors[i % colors.length]} style={{ width: `${h.allocation}%` }} />;
-            })}
+            {member.holdings.filter(h => h.isActive).map((h) => (
+              <div key={h.symbol} className={SECTOR_COLORS[h.sector]} style={{ width: `${h.allocation}%` }} />
+            ))}
           </div>
           <div className="mt-3 flex flex-wrap gap-3">
-            {member.holdings.map((h, i) => {
-              const dotColors = ["bg-primary", "bg-[hsl(200,70%,50%)]", "bg-[hsl(35,90%,55%)]", "bg-[hsl(280,60%,55%)]"];
-              return (
-                <div key={h.symbol} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className={`h-2 w-2 rounded-full ${dotColors[i % dotColors.length]}`} />
-                  {h.symbol} {h.allocation}%
-                </div>
-              );
-            })}
+            {member.holdings.filter(h => h.isActive).map((h) => (
+              <div key={h.symbol} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className={`h-2 w-2 rounded-full ${SECTOR_COLORS[h.sector]}`} />
+                {h.symbol} {h.allocation}%
+              </div>
+            ))}
           </div>
         </div>
       </main>
