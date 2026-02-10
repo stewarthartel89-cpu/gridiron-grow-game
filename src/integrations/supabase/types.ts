@@ -266,7 +266,6 @@ export type Database = {
           display_name: string
           id: string
           level: number
-          snaptrade_user_secret: string | null
           team_name: string
           updated_at: string
           user_id: string
@@ -278,7 +277,6 @@ export type Database = {
           display_name?: string
           id?: string
           level?: number
-          snaptrade_user_secret?: string | null
           team_name?: string
           updated_at?: string
           user_id: string
@@ -290,7 +288,6 @@ export type Database = {
           display_name?: string
           id?: string
           level?: number
-          snaptrade_user_secret?: string | null
           team_name?: string
           updated_at?: string
           user_id?: string
@@ -298,9 +295,65 @@ export type Database = {
         }
         Relationships: []
       }
+      snaptrade_secrets: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          user_secret: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          user_secret: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          user_secret?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          level: number | null
+          team_name: string | null
+          updated_at: string | null
+          user_id: string | null
+          xp: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          level?: number | null
+          team_name?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          xp?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          level?: number | null
+          team_name?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_league_ids: { Args: { _user_id: string }; Returns: string[] }
