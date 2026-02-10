@@ -3,8 +3,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import TeamDetail from "./pages/TeamDetail";
 import LineupPage from "./pages/LineupPage";
@@ -13,6 +14,7 @@ import NewsPage from "./pages/NewsPage";
 import LeaguePage from "./pages/LeaguePage";
 import SocialPage from "./pages/SocialPage";
 import SettingsPage from "./pages/SettingsPage";
+import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import Onboarding from "./components/Onboarding";
@@ -21,27 +23,23 @@ const queryClient = new QueryClient();
 
 const ONBOARDING_KEY = "capital_league_onboarded_v2";
 
-const AnimatedRoutes = () => {
-  const location = useLocation();
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
 
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Index />} />
-        <Route path="/team/:id" element={<TeamDetail />} />
-        <Route path="/lineup" element={<LineupPage />} />
-        <Route path="/scout" element={<ScoutPage />} />
-        <Route path="/news" element={<NewsPage />} />
-        <Route path="/league" element={<LeaguePage />} />
-        <Route path="/social" element={<SocialPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AnimatePresence>
-  );
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
 };
 
-const App = () => {
+const AnimatedRoutes = () => {
+  const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(
     () => !localStorage.getItem(ONBOARDING_KEY)
   );
@@ -52,18 +50,39 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        {showOnboarding && <Onboarding onComplete={completeOnboarding} />}
+    <>
+      {showOnboarding && <Onboarding onComplete={completeOnboarding} />}
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/team/:id" element={<ProtectedRoute><TeamDetail /></ProtectedRoute>} />
+          <Route path="/lineup" element={<ProtectedRoute><LineupPage /></ProtectedRoute>} />
+          <Route path="/scout" element={<ProtectedRoute><ScoutPage /></ProtectedRoute>} />
+          <Route path="/news" element={<ProtectedRoute><NewsPage /></ProtectedRoute>} />
+          <Route path="/league" element={<ProtectedRoute><LeaguePage /></ProtectedRoute>} />
+          <Route path="/social" element={<ProtectedRoute><SocialPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AnimatePresence>
+    </>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <AuthProvider>
         <BrowserRouter>
           <AnimatedRoutes />
           <BottomNav />
         </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
