@@ -1,5 +1,6 @@
 import LeagueHeader from "@/components/LeagueHeader";
 import Standings from "@/components/Standings";
+import PageTransition from "@/components/PageTransition";
 import { leagueSettings, leagueMembers } from "@/data/mockData";
 import { Trophy, Crown, Users, Calendar, Shield, DollarSign, Settings as SettingsIcon } from "lucide-react";
 
@@ -10,6 +11,7 @@ const LeaguePage = () => {
     .slice(0, s.playoffTeams);
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-24">
       <LeagueHeader />
       <main className="mx-auto max-w-2xl px-4 py-5 space-y-5">
@@ -117,6 +119,7 @@ const LeaguePage = () => {
         <Standings />
       </main>
     </div>
+    </PageTransition>
   );
 };
 

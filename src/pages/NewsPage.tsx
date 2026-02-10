@@ -1,5 +1,6 @@
 import { useState, memo } from "react";
 import LeagueHeader from "@/components/LeagueHeader";
+import PageTransition from "@/components/PageTransition";
 import { Newspaper, Clock, TrendingUp, Flame, BarChart3, DollarSign } from "lucide-react";
 
 type NewsSection = "top" | "trending" | "crypto" | "earnings";
@@ -73,6 +74,7 @@ const NewsPage = () => {
   const articles = activeSection === "all" ? mockArticles : mockArticles.filter(a => a.section === activeSection);
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-24">
       <LeagueHeader />
       <main className="mx-auto max-w-2xl px-4 py-5 space-y-4">
@@ -120,6 +122,7 @@ const NewsPage = () => {
         </p>
       </main>
     </div>
+    </PageTransition>
   );
 };
 

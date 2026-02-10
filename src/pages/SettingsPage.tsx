@@ -1,4 +1,5 @@
 import LeagueHeader from "@/components/LeagueHeader";
+import PageTransition from "@/components/PageTransition";
 import { leagueSettings, leagueMembers } from "@/data/mockData";
 import { Settings as SettingsIcon, Crown, Shield, DollarSign, Calendar, Users, ChevronRight, Trophy, BarChart3, LogOut } from "lucide-react";
 
@@ -7,6 +8,7 @@ const SettingsPage = () => {
   const me = leagueMembers[0];
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-24">
       <LeagueHeader />
       <main className="mx-auto max-w-2xl px-4 py-5 space-y-5">
@@ -92,6 +94,7 @@ const SettingsPage = () => {
         </button>
       </main>
     </div>
+    </PageTransition>
   );
 };
 
