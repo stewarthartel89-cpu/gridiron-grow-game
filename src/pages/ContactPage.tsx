@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 
 const team = [
   {
-    name: "Your Name",
+    name: "Stewart Hartel",
     role: "Founder & CEO",
-    email: "founder@gridirongrownfl.com",
+    email: "stewartph13@icloud.com",
     linkedin: "https://linkedin.com/in/yourprofile",
     bio: "Building the future of fantasy investing.",
   },
