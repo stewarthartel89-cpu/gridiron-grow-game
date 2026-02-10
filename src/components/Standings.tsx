@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useLeagueData, LeagueMemberData } from "@/hooks/useLeagueData";
-import { Zap } from "lucide-react";
+import { useLeagueData } from "@/hooks/useLeagueData";
 
 const Standings = () => {
   const navigate = useNavigate();
@@ -45,23 +44,13 @@ const Standings = () => {
             }`}>
               {i + 1}
             </span>
-            <div className="relative">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-[10px] font-bold text-secondary-foreground">
-                {member.avatar}
-              </div>
-              <div className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-bonus text-[7px] font-bold text-bonus-foreground">
-                {member.level}
-              </div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-[10px] font-bold text-secondary-foreground">
+              {member.avatar}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-foreground">{member.teamName}</p>
               <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                 <span>{member.wins}-{member.losses}</span>
-                <span>·</span>
-                <span className="flex items-center gap-0.5 text-xp">
-                  <Zap className="h-2.5 w-2.5" />
-                  {member.xp.toLocaleString()}
-                </span>
               </div>
             </div>
             <div className="flex flex-col items-end gap-0.5">
