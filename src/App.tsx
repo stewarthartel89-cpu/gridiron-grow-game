@@ -19,7 +19,7 @@ import Onboarding from "./components/Onboarding";
 
 const queryClient = new QueryClient();
 
-const ONBOARDING_KEY = "capital_league_onboarded";
+const ONBOARDING_KEY = "capital_league_onboarded_v2";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
