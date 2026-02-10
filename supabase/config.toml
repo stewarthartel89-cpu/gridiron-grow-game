@@ -1,4 +1,4 @@
 project_id = "vvvatksiimeglrggoksp"
 
 [functions.finnhub-proxy]
-verify_jwt = true
+verify_jwt = false
