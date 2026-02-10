@@ -1,7 +1,7 @@
 import { memo, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { leagueMembers, LeagueMember, Sector } from "@/data/mockData";
-import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Zap, Shield, AlertTriangle } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Shield, AlertTriangle } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 const SECTOR_COLORS: Record<Sector, string> = {
@@ -123,22 +123,13 @@ const TeamDetail = () => {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2.5 flex-1">
-            <div className="relative">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-display text-sm font-bold text-primary-foreground">
-                {member.avatar}
-              </div>
-              <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-bonus text-[8px] font-bold text-bonus-foreground">
-                {member.level}
-              </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-display text-sm font-bold text-primary-foreground">
+              {member.avatar}
             </div>
             <div>
               <h1 className="text-base font-bold text-foreground">{member.teamName}</h1>
               <p className="text-xs text-muted-foreground">{member.name}</p>
             </div>
-          </div>
-          <div className="flex items-center gap-1 rounded-full bg-xp/15 px-2 py-1">
-            <Zap className="h-3 w-3 text-xp" />
-            <span className="text-[10px] font-bold text-xp">{member.xp.toLocaleString()}</span>
           </div>
         </div>
       </header>

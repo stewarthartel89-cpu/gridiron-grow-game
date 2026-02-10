@@ -1,4 +1,4 @@
-import { TrendingUp, Zap } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useLeagueData } from "@/hooks/useLeagueData";
 
 const LeagueHeader = () => {
@@ -30,23 +30,10 @@ const LeagueHeader = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {currentMember && (
-              <>
-                <div className="flex items-center gap-1 rounded-full bg-xp/15 px-2 py-1">
-                  <Zap className="h-3 w-3 text-xp" />
-                  <span className="text-[10px] font-bold text-xp">{currentMember.xp.toLocaleString()} XP</span>
-                </div>
-                <div className="flex items-center gap-1 rounded-full bg-bonus/15 px-2 py-1">
-                  <span className="text-[10px] font-bold text-bonus">LVL {currentMember.level}</span>
-                </div>
-              </>
-            )}
-            <div className="rounded-md bg-primary px-2 py-1">
-              <p className="font-display text-[11px] font-bold text-primary-foreground">
-                WK {settings.currentWeek}/{settings.seasonLength}
-              </p>
-            </div>
+          <div className="rounded-md bg-primary px-2 py-1">
+            <p className="font-display text-[11px] font-bold text-primary-foreground">
+              WK {settings.currentWeek}/{settings.seasonLength}
+            </p>
           </div>
         </div>
       </div>
