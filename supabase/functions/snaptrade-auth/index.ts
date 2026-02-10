@@ -142,14 +142,14 @@ serve(async (req) => {
     }
 
     if (action === "register") {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("snaptrade_user_secret")
+      const { data: secretRow } = await supabase
+        .from("snaptrade_secrets")
+        .select("user_secret")
         .eq("user_id", user.id)
         .single();
 
-      if (profile?.snaptrade_user_secret) {
-        return new Response(JSON.stringify({ success: true, userSecret: profile.snaptrade_user_secret }), {
+      if (secretRow?.user_secret) {
+        return new Response(JSON.stringify({ success: true, userSecret: secretRow.user_secret }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -163,9 +163,8 @@ serve(async (req) => {
         );
 
         await supabase
-          .from("profiles")
-          .update({ snaptrade_user_secret: result.userSecret })
-          .eq("user_id", user.id);
+          .from("snaptrade_secrets")
+          .upsert({ user_id: user.id, user_secret: result.userSecret }, { onConflict: "user_id" });
 
         return new Response(JSON.stringify({ success: true, userSecret: result.userSecret }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -176,7 +175,7 @@ serve(async (req) => {
           console.log("User already registered. Deleting and re-registering...");
           await snaptradeRequest("DELETE", `/snapTrade/deleteUser`, {}, { userId: user.id });
           const result = await snaptradeRequest("POST", "/snapTrade/registerUser", {}, { userId: user.id });
-          await supabase.from("profiles").update({ snaptrade_user_secret: result.userSecret }).eq("user_id", user.id);
+          await supabase.from("snaptrade_secrets").upsert({ user_id: user.id, user_secret: result.userSecret }, { onConflict: "user_id" });
           return new Response(JSON.stringify({ success: true, userSecret: result.userSecret }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
@@ -188,12 +187,12 @@ serve(async (req) => {
     if (action === "connect") {
       let secret = userSecret;
       if (!secret) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("snaptrade_user_secret")
+        const { data: secretRow } = await supabase
+          .from("snaptrade_secrets")
+          .select("user_secret")
           .eq("user_id", user.id)
           .single();
-        secret = profile?.snaptrade_user_secret;
+        secret = secretRow?.user_secret;
       }
       if (!secret) throw new Error("No SnapTrade user secret found. Please register first.");
 
