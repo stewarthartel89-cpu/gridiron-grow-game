@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LeagueProvider, useLeague } from "@/contexts/LeagueContext";
 import Index from "./pages/Index";
 import TeamDetail from "./pages/TeamDetail";
 import LineupPage from "./pages/LineupPage";
@@ -15,6 +16,7 @@ import LeaguePage from "./pages/LeaguePage";
 import SocialPage from "./pages/SocialPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
+import LeagueHubPage from "./pages/LeagueHubPage";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import Onboarding from "./components/Onboarding";
@@ -38,6 +40,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const LeagueGate = ({ children }: { children: React.ReactNode }) => {
+  const { leagueId, loading } = useLeague();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!leagueId) return <LeagueHubPage />;
+  return <>{children}</>;
+};
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(
@@ -55,13 +72,13 @@ const AnimatedRoutes = () => {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-          <Route path="/team/:id" element={<ProtectedRoute><TeamDetail /></ProtectedRoute>} />
-          <Route path="/lineup" element={<ProtectedRoute><LineupPage /></ProtectedRoute>} />
-          <Route path="/scout" element={<ProtectedRoute><ScoutPage /></ProtectedRoute>} />
-          <Route path="/news" element={<ProtectedRoute><NewsPage /></ProtectedRoute>} />
-          <Route path="/league" element={<ProtectedRoute><LeaguePage /></ProtectedRoute>} />
-          <Route path="/social" element={<ProtectedRoute><SocialPage /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute><LeagueGate><Index /></LeagueGate></ProtectedRoute>} />
+          <Route path="/team/:id" element={<ProtectedRoute><LeagueGate><TeamDetail /></LeagueGate></ProtectedRoute>} />
+          <Route path="/lineup" element={<ProtectedRoute><LeagueGate><LineupPage /></LeagueGate></ProtectedRoute>} />
+          <Route path="/scout" element={<ProtectedRoute><LeagueGate><ScoutPage /></LeagueGate></ProtectedRoute>} />
+          <Route path="/news" element={<ProtectedRoute><LeagueGate><NewsPage /></LeagueGate></ProtectedRoute>} />
+          <Route path="/league" element={<ProtectedRoute><LeagueGate><LeaguePage /></LeagueGate></ProtectedRoute>} />
+          <Route path="/social" element={<ProtectedRoute><LeagueGate><SocialPage /></LeagueGate></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -76,10 +93,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
-          <AnimatedRoutes />
-          <BottomNav />
-        </BrowserRouter>
+        <LeagueProvider>
+          <BrowserRouter>
+            <AnimatedRoutes />
+            <BottomNav />
+          </BrowserRouter>
+        </LeagueProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
