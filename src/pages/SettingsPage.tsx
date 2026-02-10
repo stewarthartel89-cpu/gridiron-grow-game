@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Settings as SettingsIcon, Crown, Shield, DollarSign, Calendar, Users,
   ChevronRight, Trophy, BarChart3, LogOut, Link2, RefreshCw, Loader2,
-  Pencil, Check, X,
+  Pencil, Check, X, Copy, Share2, CheckCheck,
 } from "lucide-react";
 
 /* ── Editable Field ─────────────────────────────────────── */
@@ -135,7 +135,65 @@ const CommissionerRow = ({
   );
 };
 
-/* ── Settings Page ──────────────────────────────────────── */
+/* ── Invite Code Section ────────────────────────────────── */
+const InviteCodeSection = ({ code }: { code: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareInvite = async () => {
+    const text = `Join my Capital League! Use invite code: ${code}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Join Capital League", text });
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+        <Users className="h-4 w-4 text-primary" />
+        <h3 className="font-display text-sm font-bold text-foreground">INVITE PLAYERS</h3>
+      </div>
+      <div className="p-4 space-y-3">
+        <p className="text-xs text-muted-foreground">
+          Share this code with friends so they can join your league.
+        </p>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center justify-center rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 py-3">
+            <span className="font-display text-xl font-bold tracking-[0.3em] text-foreground">{code.toUpperCase()}</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={copyCode}
+            className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-foreground active:bg-accent transition-colors"
+          >
+            {copied ? <CheckCheck className="h-4 w-4 text-gain" /> : <Copy className="h-4 w-4" />}
+            {copied ? "Copied!" : "Copy Code"}
+          </button>
+          <button
+            onClick={shareInvite}
+            className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:bg-primary/80"
+          >
+            <Share2 className="h-4 w-4" />
+            Share Invite
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SettingsPage = () => {
   const { signOut, user, session } = useAuth();
   const { settings, currentMember, loading } = useLeagueData();
@@ -379,10 +437,10 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          {/* Invite */}
-          <button className="w-full rounded-xl bg-primary py-3 font-display text-sm font-bold text-primary-foreground active:bg-primary/80">
-            INVITE PLAYERS
-          </button>
+          {/* Invite Code */}
+          {settings?.inviteCode && (
+            <InviteCodeSection code={settings.inviteCode} />
+          )}
 
           {/* Sign Out */}
           <button
