@@ -110,11 +110,11 @@ const ContactPage = () => {
               For partnerships, verification inquiries, or support:
             </p>
             <a
-              href="mailto:contact@gridirongrownfl.com"
+              href="mailto:stewartph13@icloud.com"
               className="flex items-center gap-2 text-primary hover:underline font-medium"
             >
               <Mail className="h-4 w-4" />
-              contact@gridirongrownfl.com
+              stewartph13@icloud.com
             </a>
           </div>
         </motion.section>
