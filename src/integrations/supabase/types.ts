@@ -266,6 +266,7 @@ export type Database = {
           display_name: string
           id: string
           level: number
+          snaptrade_user_secret: string | null
           team_name: string
           updated_at: string
           user_id: string
@@ -277,6 +278,7 @@ export type Database = {
           display_name?: string
           id?: string
           level?: number
+          snaptrade_user_secret?: string | null
           team_name?: string
           updated_at?: string
           user_id: string
@@ -288,6 +290,7 @@ export type Database = {
           display_name?: string
           id?: string
           level?: number
+          snaptrade_user_secret?: string | null
           team_name?: string
           updated_at?: string
           user_id?: string

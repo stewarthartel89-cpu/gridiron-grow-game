@@ -81,25 +81,70 @@ serve(async (req) => {
     const { action, redirectUri, userSecret } = await req.json();
 
     if (action === "register") {
-      const result = await snaptradeRequest(
-        "POST",
-        "/snapTrade/registerUser",
-        {},
-        { userId: user.id }
-      );
+      // Check if user already has a stored secret
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("snaptrade_user_secret")
+        .eq("user_id", user.id)
+        .single();
 
-      return new Response(JSON.stringify({ success: true, userSecret: result.userSecret }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (profile?.snaptrade_user_secret) {
+        return new Response(JSON.stringify({ success: true, userSecret: profile.snaptrade_user_secret }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Register new user with SnapTrade
+      try {
+        const result = await snaptradeRequest(
+          "POST",
+          "/snapTrade/registerUser",
+          {},
+          { userId: user.id }
+        );
+
+        // Store the secret
+        await supabase
+          .from("profiles")
+          .update({ snaptrade_user_secret: result.userSecret })
+          .eq("user_id", user.id);
+
+        return new Response(JSON.stringify({ success: true, userSecret: result.userSecret }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (regError) {
+        const errMsg = regError instanceof Error ? regError.message : "";
+        if (errMsg.includes("1010") || errMsg.includes("already exist")) {
+          // User exists but we lost the secret — need to delete and re-register
+          console.log("User already registered but secret not stored. Deleting and re-registering...");
+          await snaptradeRequest("DELETE", `/snapTrade/deleteUser`, {}, { userId: user.id });
+          const result = await snaptradeRequest("POST", "/snapTrade/registerUser", {}, { userId: user.id });
+          await supabase.from("profiles").update({ snaptrade_user_secret: result.userSecret }).eq("user_id", user.id);
+          return new Response(JSON.stringify({ success: true, userSecret: result.userSecret }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw regError;
+      }
     }
 
     if (action === "connect") {
-      if (!userSecret) throw new Error("userSecret is required for connect action");
+      // Get stored secret
+      let secret = userSecret;
+      if (!secret) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("snaptrade_user_secret")
+          .eq("user_id", user.id)
+          .single();
+        secret = profile?.snaptrade_user_secret;
+      }
+      if (!secret) throw new Error("No SnapTrade user secret found. Please register first.");
 
       const result = await snaptradeRequest(
         "POST",
         "/snapTrade/login",
-        { userId: user.id, userSecret },
+        { userId: user.id, userSecret: secret },
         {
           broker: "ROBINHOOD",
           immediateRedirect: true,
