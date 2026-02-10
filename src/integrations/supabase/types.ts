@@ -14,7 +14,287 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activity_feed: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          id: string
+          league_id: string
+          message: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          league_id: string
+          message: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          league_id?: string
+          message?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_feed_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      holdings: {
+        Row: {
+          allocation: number
+          avg_cost: number
+          current_price: number
+          id: string
+          is_active: boolean
+          league_id: string
+          name: string
+          sector: string
+          shares: number
+          symbol: string
+          updated_at: string
+          user_id: string
+          weeks_held: number
+        }
+        Insert: {
+          allocation?: number
+          avg_cost?: number
+          current_price?: number
+          id?: string
+          is_active?: boolean
+          league_id: string
+          name: string
+          sector: string
+          shares?: number
+          symbol: string
+          updated_at?: string
+          user_id: string
+          weeks_held?: number
+        }
+        Update: {
+          allocation?: number
+          avg_cost?: number
+          current_price?: number
+          id?: string
+          is_active?: boolean
+          league_id?: string
+          name?: string
+          sector?: string
+          shares?: number
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+          weeks_held?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holdings_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      league_members: {
+        Row: {
+          id: string
+          joined_at: string
+          league_id: string
+          losses: number
+          streak: string | null
+          user_id: string
+          wins: number
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          league_id: string
+          losses?: number
+          streak?: string | null
+          user_id: string
+          wins?: number
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          league_id?: string
+          losses?: number
+          streak?: string | null
+          user_id?: string
+          wins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_members_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leagues: {
+        Row: {
+          allow_crypto: boolean
+          allow_international: boolean
+          commissioner_id: string
+          created_at: string
+          current_week: number
+          diversity_strictness: string
+          id: string
+          invite_code: string | null
+          is_public: boolean
+          max_members: number
+          max_single_sector_pct: number
+          min_sectors_required: number
+          name: string
+          playoff_start_week: number
+          playoff_teams: number
+          season_length: number
+          weekly_deposit: number
+        }
+        Insert: {
+          allow_crypto?: boolean
+          allow_international?: boolean
+          commissioner_id: string
+          created_at?: string
+          current_week?: number
+          diversity_strictness?: string
+          id?: string
+          invite_code?: string | null
+          is_public?: boolean
+          max_members?: number
+          max_single_sector_pct?: number
+          min_sectors_required?: number
+          name: string
+          playoff_start_week?: number
+          playoff_teams?: number
+          season_length?: number
+          weekly_deposit?: number
+        }
+        Update: {
+          allow_crypto?: boolean
+          allow_international?: boolean
+          commissioner_id?: string
+          created_at?: string
+          current_week?: number
+          diversity_strictness?: string
+          id?: string
+          invite_code?: string | null
+          is_public?: boolean
+          max_members?: number
+          max_single_sector_pct?: number
+          min_sectors_required?: number
+          name?: string
+          playoff_start_week?: number
+          playoff_teams?: number
+          season_length?: number
+          weekly_deposit?: number
+        }
+        Relationships: []
+      }
+      matchups: {
+        Row: {
+          away_adjusted_pct: number | null
+          away_growth_pct: number | null
+          away_user_id: string
+          created_at: string
+          home_adjusted_pct: number | null
+          home_growth_pct: number | null
+          home_user_id: string
+          id: string
+          is_final: boolean
+          league_id: string
+          week: number
+          winner_user_id: string | null
+        }
+        Insert: {
+          away_adjusted_pct?: number | null
+          away_growth_pct?: number | null
+          away_user_id: string
+          created_at?: string
+          home_adjusted_pct?: number | null
+          home_growth_pct?: number | null
+          home_user_id: string
+          id?: string
+          is_final?: boolean
+          league_id: string
+          week: number
+          winner_user_id?: string | null
+        }
+        Update: {
+          away_adjusted_pct?: number | null
+          away_growth_pct?: number | null
+          away_user_id?: string
+          created_at?: string
+          home_adjusted_pct?: number | null
+          home_growth_pct?: number | null
+          home_user_id?: string
+          id?: string
+          is_final?: boolean
+          league_id?: string
+          week?: number
+          winner_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matchups_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+          level: number
+          team_name: string
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          level?: number
+          team_name?: string
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          level?: number
+          team_name?: string
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
