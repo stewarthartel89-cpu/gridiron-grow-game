@@ -6,15 +6,9 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <LeagueHeader />
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-8 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            <WeeklyMatchups />
-          </div>
-          <div className="lg:col-span-2">
-            <Standings />
-          </div>
-        </div>
+      <main className="px-4 py-5 space-y-6 pb-8 max-w-2xl mx-auto">
+        <WeeklyMatchups />
+        <Standings />
       </main>
     </div>
   );
