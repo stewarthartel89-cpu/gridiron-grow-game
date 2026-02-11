@@ -2,7 +2,9 @@ import { memo, useMemo, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLeague } from "@/contexts/LeagueContext";
-import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Shield, AlertTriangle } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { calculateDiversification } from "@/lib/diversificationModifier";
+import DiversificationModifier from "@/components/DiversificationModifier";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 type Sector = "Tech" | "Healthcare" | "Energy" | "Financials" | "Consumer" | "Index/ETF" | "International" | "Real Estate" | "Crypto" | "Industrials";
@@ -174,13 +176,8 @@ const TeamDetail = () => {
   const totalReturn = totalInvested > 0 ? ((currentValue - totalInvested) / totalInvested) * 100 : 0;
   const totalGain = currentValue - totalInvested;
 
-  // Compute diversity score from active holdings
   const activeHoldings = useMemo(() => team?.holdings.filter(h => h.is_active) || [], [team]);
-  const sectors = useMemo(() => {
-    const s = new Set(activeHoldings.map(h => h.sector));
-    return s.size;
-  }, [activeHoldings]);
-  const diversityScore = Math.min(100, sectors * 20);
+  const diversification = useMemo(() => calculateDiversification(team?.holdings || []), [team]);
 
   if (loading) {
     return (
@@ -255,26 +252,8 @@ const TeamDetail = () => {
           </div>
         </div>
 
-        {/* Diversity Score */}
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Shield className={`h-4 w-4 ${diversityScore >= 60 ? "text-gain" : "text-warning"}`} />
-              <h2 className="text-sm font-bold text-foreground">Diversity Score</h2>
-            </div>
-            <span className={`font-display text-lg font-bold ${diversityScore >= 80 ? "text-gain" : diversityScore >= 60 ? "text-warning" : "text-loss"}`}>
-              {diversityScore}/100
-            </span>
-          </div>
-          <div className="h-2 rounded-full bg-secondary overflow-hidden">
-            <div className={`h-full rounded-full ${diversityScore >= 80 ? "bg-gain" : diversityScore >= 60 ? "bg-warning" : "bg-loss"}`} style={{ width: `${diversityScore}%` }} />
-          </div>
-          {diversityScore < 60 && (
-            <p className="mt-2 flex items-center gap-1 text-[11px] text-warning">
-              <AlertTriangle className="h-3 w-3" /> Penalty active — diversify to remove
-            </p>
-          )}
-        </div>
+        {/* Diversification Modifier */}
+        <DiversificationModifier result={diversification} />
 
         {/* Holdings */}
         {team.holdings.length > 0 ? (
