@@ -2,3 +2,9 @@ project_id = "vvvatksiimeglrggoksp"
 
 [functions.finnhub-proxy]
 verify_jwt = false
+
+[functions.snaptrade-auth]
+verify_jwt = false
+
+[functions.snaptrade-sync]
+verify_jwt = false
