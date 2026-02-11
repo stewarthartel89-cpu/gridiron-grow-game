@@ -172,13 +172,34 @@ serve(async (req) => {
       } catch (regError) {
         const errMsg = regError instanceof Error ? regError.message : "";
         if (errMsg.includes("1010") || errMsg.includes("already exist")) {
-          console.log("User already registered. Deleting and re-registering...");
-          await snaptradeRequest("DELETE", `/snapTrade/deleteUser`, {}, { userId: user.id });
-          const result = await snaptradeRequest("POST", "/snapTrade/registerUser", {}, { userId: user.id });
-          await supabase.from("snaptrade_secrets").upsert({ user_id: user.id, user_secret: result.userSecret }, { onConflict: "user_id" });
-          return new Response(JSON.stringify({ success: true, userSecret: result.userSecret }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          console.log("User already registered. Attempting delete and re-register...");
+          try {
+            await snaptradeRequest("DELETE", `/snapTrade/deleteUser`, {}, { userId: user.id });
+          } catch (deleteErr) {
+            console.warn("Delete failed (may be from old credentials), ignoring:", deleteErr);
+          }
+          // Try registering again — if delete succeeded this will work,
+          // if delete failed we need a unique userId
+          try {
+            const result = await snaptradeRequest("POST", "/snapTrade/registerUser", {}, { userId: user.id });
+            await supabase.from("snaptrade_secrets").upsert({ user_id: user.id, user_secret: result.userSecret }, { onConflict: "user_id" });
+            return new Response(JSON.stringify({ success: true, userSecret: result.userSecret }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          } catch (retryErr) {
+            const retryMsg = retryErr instanceof Error ? retryErr.message : "";
+            if (retryMsg.includes("1010") || retryMsg.includes("already exist")) {
+              // User stuck under old credentials — register with a suffixed ID
+              const newUserId = `${user.id}_v2`;
+              console.log("Re-register failed. Trying with suffixed userId:", newUserId);
+              const result = await snaptradeRequest("POST", "/snapTrade/registerUser", {}, { userId: newUserId });
+              await supabase.from("snaptrade_secrets").upsert({ user_id: user.id, user_secret: result.userSecret }, { onConflict: "user_id" });
+              return new Response(JSON.stringify({ success: true, userSecret: result.userSecret }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+            }
+            throw retryErr;
+          }
         }
         throw regError;
       }
