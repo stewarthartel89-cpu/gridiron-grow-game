@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, useMemo } from "react";
 import LeagueHeader from "@/components/LeagueHeader";
 import PageTransition from "@/components/PageTransition";
-import { Search, TrendingUp, TrendingDown, ExternalLink, RefreshCw, AlertCircle, SlidersHorizontal, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, ExternalLink, RefreshCw, AlertCircle, SlidersHorizontal, ArrowUpDown, ChevronDown, Globe, Landmark } from "lucide-react";
 import { useStockQuotes, useSymbolSearch, type FormattedQuote } from "@/hooks/useFinnhub";
 
 // Symbol -> sector mapping
@@ -10,11 +10,49 @@ const STOCK_SECTORS: Record<string, string> = {
   AMZN: "Consumer", TSLA: "Consumer",
   COIN: "Crypto", SOFI: "Financials", JPM: "Financials",
   PFE: "Healthcare", XOM: "Energy",
+  // International stocks
+  VXUS: "International", EFA: "International", VEA: "International", IEMG: "International", EEM: "International",
+  // US Bond ETFs (all available on Robinhood)
+  BND: "Bonds", AGG: "Bonds", TLT: "Bonds", SHY: "Bonds", IEF: "Bonds", VCIT: "Bonds", LQD: "Bonds",
+  // International Bond ETFs (all available on Robinhood)
+  BNDX: "Intl Bonds", IAGG: "Intl Bonds", EMB: "Intl Bonds", VWOB: "Intl Bonds",
+};
+
+// Region classification
+const SYMBOL_REGION: Record<string, "US" | "International"> = {
+  AAPL: "US", NVDA: "US", MSFT: "US", GOOGL: "US", META: "US",
+  AMZN: "US", TSLA: "US", COIN: "US", SOFI: "US", JPM: "US",
+  PFE: "US", XOM: "US",
+  BND: "US", AGG: "US", TLT: "US", SHY: "US", IEF: "US", VCIT: "US", LQD: "US",
+  VXUS: "International", EFA: "International", VEA: "International", IEMG: "International", EEM: "International",
+  BNDX: "International", IAGG: "International", EMB: "International", VWOB: "International",
+};
+
+// Asset type classification
+const SYMBOL_ASSET_TYPE: Record<string, "Stocks" | "Bonds"> = {
+  AAPL: "Stocks", NVDA: "Stocks", MSFT: "Stocks", GOOGL: "Stocks", META: "Stocks",
+  AMZN: "Stocks", TSLA: "Stocks", COIN: "Stocks", SOFI: "Stocks", JPM: "Stocks",
+  PFE: "Stocks", XOM: "Stocks",
+  VXUS: "Stocks", EFA: "Stocks", VEA: "Stocks", IEMG: "Stocks", EEM: "Stocks",
+  BND: "Bonds", AGG: "Bonds", TLT: "Bonds", SHY: "Bonds", IEF: "Bonds", VCIT: "Bonds", LQD: "Bonds",
+  BNDX: "Bonds", IAGG: "Bonds", EMB: "Bonds", VWOB: "Bonds",
 };
 
 const WATCHED_SYMBOLS = Object.keys(STOCK_SECTORS);
 
-const SECTORS = ["All Sectors", "Technology", "Consumer", "Financials", "Energy", "Healthcare", "Crypto"];
+const SECTORS = ["All Sectors", "Technology", "Consumer", "Financials", "Energy", "Healthcare", "Crypto", "International", "Bonds", "Intl Bonds"];
+
+const REGION_OPTIONS = [
+  { value: "All", label: "All Regions" },
+  { value: "US", label: "US" },
+  { value: "International", label: "International" },
+];
+
+const ASSET_TYPE_OPTIONS = [
+  { value: "All", label: "Stocks & Bonds" },
+  { value: "Stocks", label: "Stocks" },
+  { value: "Bonds", label: "Bonds" },
+];
 
 type SortOption = "default" | "top-gainers" | "top-losers" | "price-high" | "price-low";
 
@@ -110,6 +148,8 @@ const ScoutPage = () => {
   const [symbols, setSymbols] = useState(WATCHED_SYMBOLS);
   const [sort, setSort] = useState<SortOption>("default");
   const [sector, setSector] = useState("All Sectors");
+  const [region, setRegion] = useState("All");
+  const [assetType, setAssetType] = useState("All");
   const { quotes, loading, error, refetch } = useStockQuotes(symbols);
   const { results: searchResults, search, loading: searchLoading } = useSymbolSearch();
 
@@ -130,6 +170,16 @@ const ScoutPage = () => {
       result = result.filter((q) => STOCK_SECTORS[q.symbol] === sector);
     }
 
+    // Region filter
+    if (region !== "All") {
+      result = result.filter((q) => SYMBOL_REGION[q.symbol] === region);
+    }
+
+    // Asset type filter
+    if (assetType !== "All") {
+      result = result.filter((q) => SYMBOL_ASSET_TYPE[q.symbol] === assetType);
+    }
+
     // Sort
     switch (sort) {
       case "top-gainers": result.sort((a, b) => b.changePct - a.changePct); break;
@@ -139,7 +189,7 @@ const ScoutPage = () => {
     }
 
     return result;
-  }, [quotes, searchInput, sort, sector]);
+  }, [quotes, searchInput, sort, sector, region, assetType]);
 
   const addSymbol = (sym: string) => {
     if (!symbols.includes(sym)) setSymbols((prev) => [...prev, sym]);
@@ -203,9 +253,21 @@ const ScoutPage = () => {
               onChange={setSector}
               icon={SlidersHorizontal}
             />
-            {(sector !== "All Sectors" || sort !== "default") && (
+            <DropdownSelect
+              value={region}
+              options={REGION_OPTIONS}
+              onChange={setRegion}
+              icon={Globe}
+            />
+            <DropdownSelect
+              value={assetType}
+              options={ASSET_TYPE_OPTIONS}
+              onChange={setAssetType}
+              icon={Landmark}
+            />
+            {(sector !== "All Sectors" || sort !== "default" || region !== "All" || assetType !== "All") && (
               <button
-                onClick={() => { setSector("All Sectors"); setSort("default"); }}
+                onClick={() => { setSector("All Sectors"); setSort("default"); setRegion("All"); setAssetType("All"); }}
                 className="text-[10px] font-semibold text-primary"
               >
                 Clear
