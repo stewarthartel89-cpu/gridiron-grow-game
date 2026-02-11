@@ -77,7 +77,9 @@ async function snaptradeRequest(
   const data = await res.json();
   if (!res.ok) {
     console.error("SnapTrade API error:", res.status, JSON.stringify(data));
-    throw new Error(`SNAPTRADE_API_ERROR:${res.status}`);
+    const detail = typeof data?.detail === "string" ? data.detail : "";
+    const code = data?.code || "";
+    throw new Error(`SNAPTRADE_API_ERROR:${res.status}:${code}:${detail}`);
   }
   return data;
 }
