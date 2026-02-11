@@ -242,7 +242,7 @@ const TeamDetail = () => {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <div className="rounded-xl border border-border bg-card p-2.5 text-center">
             <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Record</p>
             <p className="mt-0.5 font-display text-base font-bold text-foreground">{team.wins}-{team.losses}</p>
@@ -252,10 +252,6 @@ const TeamDetail = () => {
             <p className={`mt-0.5 font-display text-base font-bold ${team.streak.startsWith("W") ? "text-gain" : team.streak.startsWith("L") ? "text-loss" : "text-muted-foreground"}`}>
               {team.streak || "—"}
             </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-2.5 text-center">
-            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Level</p>
-            <p className="mt-0.5 font-display text-base font-bold text-foreground">{team.level}</p>
           </div>
         </div>
 
