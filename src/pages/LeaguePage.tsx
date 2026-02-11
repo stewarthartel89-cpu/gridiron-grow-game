@@ -2,8 +2,9 @@ import LeagueHeader from "@/components/LeagueHeader";
 import Standings from "@/components/Standings";
 import PageTransition from "@/components/PageTransition";
 import { useLeagueData } from "@/hooks/useLeagueData";
-import { Trophy, Crown, Users, Calendar, Shield, DollarSign, Settings as SettingsIcon, Copy, Check } from "lucide-react";
+import { Trophy, Crown, Users, Calendar, Shield, DollarSign, Settings as SettingsIcon, Copy, Check, Info } from "lucide-react";
 import { useState } from "react";
+import { TARGET_ALLOCATION, BUCKETS, deviationToModifier } from "@/lib/diversificationModifier";
 
 const LeaguePage = () => {
   const { settings, members, loading } = useLeagueData();
@@ -91,32 +92,65 @@ const LeaguePage = () => {
             )}
           </div>
 
-          {/* Diversity Rules */}
+          {/* Diversification Modifier Rules */}
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center gap-2 mb-3">
               <Shield className="h-4 w-4 text-bonus" />
-              <h3 className="font-display text-sm font-bold text-foreground">LEAGUE RULES</h3>
+              <h3 className="font-display text-sm font-bold text-foreground">DIVERSIFICATION MODIFIER</h3>
+            </div>
+
+            {/* Target Allocation */}
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Target Allocation</p>
+            <div className="space-y-1.5 mb-4">
+              {BUCKETS.map((bucket) => (
+                <div key={bucket} className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{bucket}</span>
+                  <span className="text-xs font-semibold text-foreground">{TARGET_ALLOCATION[bucket]}%</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Modifier Table */}
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Score Multiplier by Deviation</p>
+            <div className="space-y-1.5 mb-4">
+              {[
+                { range: "0–5%", mod: 1.0 },
+                { range: "5–10%", mod: 0.95 },
+                { range: "10–15%", mod: 0.90 },
+                { range: "15–20%", mod: 0.85 },
+                { range: "20–25%", mod: 0.80 },
+                { range: "25%+", mod: 0.75 },
+              ].map(({ range, mod }) => (
+                <div key={range} className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{range} deviation</span>
+                  <span className={`text-xs font-bold ${mod >= 1 ? "text-gain" : mod >= 0.9 ? "text-warning" : "text-loss"}`}>
+                    {mod.toFixed(2)}x
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* How it works */}
+            <div className="rounded-lg bg-secondary p-3">
+              <div className="flex items-start gap-2">
+                <Info className="h-3.5 w-3.5 shrink-0 text-muted-foreground mt-0.5" />
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  The modifier compares your portfolio to the ideal allocation. The <strong>worst bucket deviation</strong> determines your multiplier — applied only to weekly matchup scores. Your actual portfolio returns are never altered.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* League Settings */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <SettingsIcon className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-display text-sm font-bold text-foreground">LEAGUE SETTINGS</h3>
             </div>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Diversity Strictness</span>
+                <span className="text-muted-foreground">Strictness</span>
                 <span className="font-semibold text-foreground capitalize">{settings.diversityStrictness}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Max Single Sector</span>
-                <span className="font-semibold text-foreground">{settings.maxSingleSectorPct}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Min Sectors Required</span>
-                <span className="font-semibold text-foreground">{settings.minSectorsRequired}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Crypto Allowed</span>
-                <span className="font-semibold text-foreground">{settings.allowCrypto ? "Yes" : "No"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">International Allowed</span>
-                <span className="font-semibold text-foreground">{settings.allowInternational ? "Yes" : "No"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Playoffs Start</span>
