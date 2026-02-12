@@ -6,7 +6,7 @@ import WeeklyMatchups from "@/components/WeeklyMatchups";
 import MatchupDetailView from "@/components/MatchupDetailView";
 import { useLeagueData } from "@/hooks/useLeagueData";
 import { useLeague } from "@/contexts/LeagueContext";
-import { Settings as SettingsIcon, Binoculars, Swords, Trophy, Briefcase } from "lucide-react";
+import { Settings as SettingsIcon, Binoculars, Swords, Trophy, Briefcase, MessageCircle } from "lucide-react";
 
 // Import Scout page content inline
 import ScoutContent from "@/components/ScoutContent";
@@ -33,6 +33,12 @@ const LeaguePage = () => {
         {/* Header */}
         <header className="border-b border-border bg-card safe-area-top">
           <div className="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
+            <button
+              onClick={() => navigate("/settings")}
+              className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors"
+            >
+              <SettingsIcon className="h-5 w-5" />
+            </button>
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary glow-primary">
                 <Trophy className="h-5 w-5 text-primary-foreground" />
@@ -42,10 +48,10 @@ const LeaguePage = () => {
               </h1>
             </div>
             <button
-              onClick={() => navigate("/settings")}
+              onClick={() => navigate("/chat")}
               className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors"
             >
-              <SettingsIcon className="h-5 w-5" />
+              <MessageCircle className="h-5 w-5" />
             </button>
           </div>
         </header>
