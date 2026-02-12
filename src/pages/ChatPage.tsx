@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Send, Users, User } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
@@ -189,11 +189,21 @@ const MessageView = ({ conversation, onBack }: { conversation: Conversation; onB
 
 const ChatPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { conversations, loading } = useConversations();
   const [activeConvo, setActiveConvo] = useState<Conversation | null>(null);
 
+  // Auto-open a DM if navigated with ?dm=conversationId
+  useEffect(() => {
+    const dmId = searchParams.get("dm");
+    if (dmId && conversations.length > 0 && !activeConvo) {
+      const found = conversations.find((c) => c.id === dmId);
+      if (found) setActiveConvo(found);
+    }
+  }, [searchParams, conversations, activeConvo]);
+
   if (activeConvo) {
-    return <MessageView conversation={activeConvo} onBack={() => setActiveConvo(null)} />;
+    return <MessageView conversation={activeConvo} onBack={() => { setActiveConvo(null); navigate("/chat", { replace: true }); }} />;
   }
 
   return (

@@ -164,3 +164,54 @@ export async function sendMessage(conversationId: string, senderId: string, cont
   });
   return { error };
 }
+
+export async function findOrCreateDM(currentUserId: string, targetUserId: string, leagueId: string): Promise<string | null> {
+  // Check if a DM already exists between these two users in this league
+  const { data: myConvos } = await supabase
+    .from("conversation_members")
+    .select("conversation_id")
+    .eq("user_id", currentUserId);
+
+  if (myConvos && myConvos.length > 0) {
+    const convoIds = myConvos.map((c) => c.conversation_id);
+    
+    // Find DM conversations in this league
+    const { data: dmConvos } = await supabase
+      .from("conversations")
+      .select("id")
+      .in("id", convoIds)
+      .eq("type", "dm")
+      .eq("league_id", leagueId);
+
+    if (dmConvos) {
+      for (const convo of dmConvos) {
+        // Check if target user is also a member
+        const { data: targetMember } = await supabase
+          .from("conversation_members")
+          .select("id")
+          .eq("conversation_id", convo.id)
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+
+        if (targetMember) return convo.id;
+      }
+    }
+  }
+
+  // Create new DM conversation
+  const { data: newConvo, error: convoError } = await supabase
+    .from("conversations")
+    .insert({ league_id: leagueId, type: "dm", name: null })
+    .select("id")
+    .single();
+
+  if (convoError || !newConvo) return null;
+
+  // Add both members
+  await supabase.from("conversation_members").insert([
+    { conversation_id: newConvo.id, user_id: currentUserId },
+    { conversation_id: newConvo.id, user_id: targetUserId },
+  ]);
+
+  return newConvo.id;
+}
