@@ -237,3 +237,53 @@ export function useStockCandles(symbol: string | null, resolution: string = "D",
 
   return { candle, loading };
 }
+
+export interface CompanyProfile {
+  name: string;
+  ticker: string;
+  country: string;
+  currency: string;
+  exchange: string;
+  ipo: string;
+  marketCapitalization: number;
+  finnhubIndustry: string;
+  logo: string;
+  weburl: string;
+}
+
+export function useCompanyProfile(symbol: string | null) {
+  const [profile, setProfile] = useState<CompanyProfile | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!symbol) { setProfile(null); return; }
+    let cancelled = false;
+    setLoading(true);
+    callFinnhub("profile", { symbols: [symbol] })
+      .then((data) => {
+        if (cancelled) return;
+        const p = data.profile;
+        if (p && p.name) {
+          setProfile({
+            name: p.name,
+            ticker: p.ticker,
+            country: p.country,
+            currency: p.currency,
+            exchange: p.exchange,
+            ipo: p.ipo,
+            marketCapitalization: p.marketCapitalization,
+            finnhubIndustry: p.finnhubIndustry,
+            logo: p.logo,
+            weburl: p.weburl,
+          });
+        } else {
+          setProfile(null);
+        }
+      })
+      .catch(() => setProfile(null))
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [symbol]);
+
+  return { profile, loading };
+}
