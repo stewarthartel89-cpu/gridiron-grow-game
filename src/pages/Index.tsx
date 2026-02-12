@@ -8,6 +8,7 @@ import { useLeague, type UserLeague } from "@/contexts/LeagueContext";
 import { useMarketNews, type FormattedArticle } from "@/hooks/useFinnhub";
 import { Clock, ExternalLink, Newspaper } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
+import pogroLogo from "@/assets/pogro-logo.png";
 function timeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return "just now";
@@ -190,9 +191,7 @@ const Index = () => {
         <header className="border-b border-border bg-card">
           <div className="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary glow-primary">
-                <span className="font-display text-sm font-bold text-primary-foreground">PG</span>
-              </div>
+              <img src={pogroLogo} alt="Pogro" className="h-9 w-9 rounded-lg" />
               <h1 className="font-display text-lg font-bold tracking-wider text-foreground">Pogro</h1>
             </div>
             <button onClick={() => navigate("/settings")} className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors">
