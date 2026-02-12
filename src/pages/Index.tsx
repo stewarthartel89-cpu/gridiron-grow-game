@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Users, ChevronRight, Settings as SettingsIcon } from "lucide-react";
@@ -8,7 +8,6 @@ import { useLeague, type UserLeague } from "@/contexts/LeagueContext";
 import { useMarketNews, type FormattedArticle } from "@/hooks/useFinnhub";
 import { Clock, ExternalLink, Newspaper } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
-
 function timeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return "just now";
@@ -22,61 +21,84 @@ function timeAgo(date: Date): string {
 const LeagueCarousel = () => {
   const { leagues, setActiveLeague } = useLeague();
   const navigate = useNavigate();
-  const [emblaRef] = useEmblaCarousel({ align: "start", containScroll: "trimSnaps" });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", containScroll: "trimSnaps", dragFree: false });
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const cards: ({ type: "league"; league: UserLeague } | { type: "cta" })[] = [
     { type: "cta" },
     ...leagues.map((l) => ({ type: "league" as const, league: l })),
   ];
 
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+      emblaApi.off("reInit", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  const scrollTo = useCallback((index: number) => {
+    emblaApi?.scrollTo(index);
+  }, [emblaApi]);
+
   return (
     <div className="px-4">
-      <div ref={emblaRef} className="overflow-hidden">
-        <div className="flex gap-3">
+      <div ref={emblaRef} className="overflow-hidden cursor-grab active:cursor-grabbing">
+        <div className="flex">
           {cards.map((card, i) => {
             if (card.type === "cta") {
               return (
-                <motion.button
-                  key="cta"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  onClick={() => navigate("/league-hub")}
-                  className="min-w-[280px] flex-shrink-0 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-6 flex flex-col items-center justify-center gap-3 active:bg-primary/10 transition-colors"
-                >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
-                    <Plus className="h-7 w-7 text-primary" />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-display text-base font-bold text-foreground">Create or Join a League</p>
-                    <p className="text-xs text-muted-foreground mt-1">Start competing with friends</p>
-                  </div>
-                </motion.button>
+                <div key="cta" className="min-w-0 shrink-0 grow-0 basis-[85%] pr-3">
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    onClick={() => navigate("/league-hub")}
+                    className="w-full rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-6 flex flex-col items-center justify-center gap-3 active:bg-primary/10 transition-colors"
+                  >
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
+                      <Plus className="h-7 w-7 text-primary" />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-display text-base font-bold text-foreground">Create or Join a League</p>
+                      <p className="text-xs text-muted-foreground mt-1">Start competing with friends</p>
+                    </div>
+                  </motion.button>
+                </div>
               );
             }
 
             return (
-              <motion.button
-                key={card.league.leagueId}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={() => {
-                  setActiveLeague(card.league.leagueId);
-                  navigate("/league");
-                }}
-                className="min-w-[280px] flex-shrink-0 rounded-2xl border border-border bg-card p-6 flex flex-col items-start gap-3 active:border-primary/40 transition-colors"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary glow-primary">
-                  <Users className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <div className="text-left">
-                  <p className="font-display text-base font-bold text-foreground">{card.league.leagueName}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Tap to enter league</p>
-                </div>
-                <div className="flex items-center gap-1 text-primary text-xs font-semibold mt-auto">
-                  View <ChevronRight className="h-3.5 w-3.5" />
-                </div>
-              </motion.button>
+              <div key={card.league.leagueId} className="min-w-0 shrink-0 grow-0 basis-[85%] pr-3">
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  onClick={() => {
+                    setActiveLeague(card.league.leagueId);
+                    navigate("/league");
+                  }}
+                  className="w-full rounded-2xl border border-border bg-card p-6 flex flex-col items-start gap-3 active:border-primary/40 transition-colors"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary glow-primary">
+                    <Users className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-display text-base font-bold text-foreground">{card.league.leagueName}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Tap to enter league</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-primary text-xs font-semibold mt-auto">
+                    View <ChevronRight className="h-3.5 w-3.5" />
+                  </div>
+                </motion.button>
+              </div>
             );
           })}
         </div>
@@ -84,7 +106,12 @@ const LeagueCarousel = () => {
       {cards.length > 1 && (
         <div className="flex justify-center gap-1.5 mt-3">
           {cards.map((_, i) => (
-            <div key={i} className={`h-1.5 rounded-full transition-all ${i === 0 ? "w-4 bg-primary" : "w-1.5 bg-muted-foreground/30"}`} />
+            <button
+              key={i}
+              onClick={() => scrollTo(i)}
+              className={`rounded-full transition-all ${i === selectedIndex ? "h-2 w-5 bg-primary" : "h-2 w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"}`}
+              aria-label={`Go to slide ${i + 1}`}
+            />
           ))}
         </div>
       )}
