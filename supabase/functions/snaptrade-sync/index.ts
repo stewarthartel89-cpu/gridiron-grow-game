@@ -163,11 +163,20 @@ serve(async (req) => {
       }, 0);
 
       for (const pos of positions) {
-        const symbol = pos.symbol?.symbol || pos.symbol || "UNKNOWN";
-        const name = pos.symbol?.description || pos.symbol?.name || symbol;
-        const shares = pos.units || 0;
-        const currentPrice = pos.price || 0;
-        const avgCost = pos.averageEntryPrice || currentPrice;
+        // Validate and sanitize string fields
+        const symbol = String(pos.symbol?.symbol || pos.symbol || "UNKNOWN").slice(0, 20).toUpperCase().replace(/[^A-Z0-9.\-]/g, "");
+        if (!symbol || symbol.length === 0) continue;
+        const name = String(pos.symbol?.description || pos.symbol?.name || symbol).slice(0, 200);
+
+        // Validate numeric fields
+        const rawShares = Number(pos.units);
+        const rawPrice = Number(pos.price);
+        const rawAvgCost = Number(pos.averageEntryPrice);
+        if (isNaN(rawShares) && isNaN(rawPrice)) continue;
+
+        const shares = Math.max(0, Math.min(isNaN(rawShares) ? 0 : rawShares, 1_000_000_000));
+        const currentPrice = Math.max(0, Math.min(isNaN(rawPrice) ? 0 : rawPrice, 1_000_000_000));
+        const avgCost = Math.max(0, Math.min(isNaN(rawAvgCost) ? currentPrice : rawAvgCost, 1_000_000_000));
         const posValue = shares * currentPrice;
         const allocation = totalValue > 0 ? Math.round((posValue / totalValue) * 100) : 0;
 
