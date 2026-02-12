@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Users, ChevronRight, Settings as SettingsIcon, MessageCircle } from "lucide-react";
+import { useUnreadCount } from "@/hooks/useChat";
 import PageTransition from "@/components/PageTransition";
 import StockTicker from "@/components/StockTicker";
 import { useLeague, type UserLeague } from "@/contexts/LeagueContext";
@@ -183,6 +184,7 @@ const NewsPreview = () => {
 
 const Index = () => {
   const navigate = useNavigate();
+  const unreadCount = useUnreadCount();
 
   return (
     <PageTransition>
@@ -197,8 +199,13 @@ const Index = () => {
               <img src={pogroLogo} alt="Pogro" className="h-9 w-9 rounded-lg" />
               <h1 className="font-display text-lg font-bold tracking-wider text-foreground">Pogro</h1>
             </div>
-            <button onClick={() => navigate("/chat")} className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors">
+            <button onClick={() => navigate("/chat")} className="relative rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors">
               <MessageCircle className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </button>
           </div>
         </header>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -10,6 +10,7 @@ export interface Conversation {
   created_at: string;
   lastMessage?: string;
   lastMessageAt?: string;
+  unreadCount: number;
   otherUser?: { display_name: string; avatar_url: string | null };
 }
 
@@ -31,14 +32,52 @@ export function useConversations() {
     if (!user) return;
     setLoading(true);
 
+    // Fetch conversations + my membership (for last_read_at)
+    const { data: myMemberships } = await supabase
+      .from("conversation_members")
+      .select("conversation_id, last_read_at")
+      .eq("user_id", user.id);
+
+    if (!myMemberships || myMemberships.length === 0) { setLoading(false); return; }
+
+    const convoIds = myMemberships.map((m) => m.conversation_id);
+    const lastReadMap = new Map(myMemberships.map((m) => [m.conversation_id, m.last_read_at]));
+
     const { data: convos } = await supabase
       .from("conversations")
       .select("*")
+      .in("id", convoIds)
       .order("created_at", { ascending: false });
 
     if (!convos) { setLoading(false); return; }
 
-    // Get last message for each convo
+    // Batch: get all other DM members
+    const dmConvoIds = convos.filter((c) => c.type === "dm").map((c) => c.id);
+    let otherUserMap = new Map<string, { display_name: string; avatar_url: string | null }>();
+
+    if (dmConvoIds.length > 0) {
+      const { data: allMembers } = await supabase
+        .from("conversation_members")
+        .select("conversation_id, user_id")
+        .in("conversation_id", dmConvoIds)
+        .neq("user_id", user.id);
+
+      if (allMembers && allMembers.length > 0) {
+        const otherUserIds = [...new Set(allMembers.map((m) => m.user_id))];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, avatar_url")
+          .in("user_id", otherUserIds);
+
+        const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
+        for (const m of allMembers) {
+          const profile = profileMap.get(m.user_id);
+          if (profile) otherUserMap.set(m.conversation_id, { display_name: profile.display_name, avatar_url: profile.avatar_url });
+        }
+      }
+    }
+
+    // Batch: get last message + unread count for each convo
     const enriched: Conversation[] = [];
     for (const c of convos) {
       const { data: msgs } = await supabase
@@ -48,34 +87,24 @@ export function useConversations() {
         .order("created_at", { ascending: false })
         .limit(1);
 
-      let otherUser: Conversation["otherUser"] = undefined;
-      if (c.type === "dm") {
-        const { data: members } = await supabase
-          .from("conversation_members")
-          .select("user_id")
-          .eq("conversation_id", c.id)
-          .neq("user_id", user.id);
-
-        if (members && members.length > 0) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("display_name, avatar_url")
-            .eq("user_id", members[0].user_id)
-            .single();
-          if (profile) otherUser = profile;
-        }
-      }
+      const lastReadAt = lastReadMap.get(c.id) || c.created_at;
+      const { count } = await supabase
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", c.id)
+        .gt("created_at", lastReadAt)
+        .neq("sender_id", user.id);
 
       enriched.push({
         ...c,
         type: c.type as "group" | "dm",
         lastMessage: msgs?.[0]?.content,
         lastMessageAt: msgs?.[0]?.created_at,
-        otherUser,
+        unreadCount: count || 0,
+        otherUser: otherUserMap.get(c.id),
       });
     }
 
-    // Sort by last message time
     enriched.sort((a, b) => {
       const aTime = a.lastMessageAt || a.created_at;
       const bTime = b.lastMessageAt || b.created_at;
@@ -88,7 +117,61 @@ export function useConversations() {
 
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
 
-  return { conversations, loading, refetch: fetchConversations };
+  const totalUnread = useMemo(() => conversations.reduce((sum, c) => sum + c.unreadCount, 0), [conversations]);
+
+  return { conversations, loading, refetch: fetchConversations, totalUnread };
+}
+
+export function useUnreadCount() {
+  const { user } = useAuth();
+  const [totalUnread, setTotalUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUnread = async () => {
+      const { data: memberships } = await supabase
+        .from("conversation_members")
+        .select("conversation_id, last_read_at")
+        .eq("user_id", user.id);
+
+      if (!memberships || memberships.length === 0) { setTotalUnread(0); return; }
+
+      let total = 0;
+      for (const m of memberships) {
+        const { count } = await supabase
+          .from("messages")
+          .select("id", { count: "exact", head: true })
+          .eq("conversation_id", m.conversation_id)
+          .gt("created_at", m.last_read_at)
+          .neq("sender_id", user.id);
+        total += count || 0;
+      }
+      setTotalUnread(total);
+    };
+
+    fetchUnread();
+
+    // Listen for new messages globally
+    const channel = supabase
+      .channel("unread-global")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  return totalUnread;
+}
+
+export async function markConversationRead(conversationId: string, userId: string) {
+  await supabase
+    .from("conversation_members")
+    .update({ last_read_at: new Date().toISOString() })
+    .eq("conversation_id", conversationId)
+    .eq("user_id", userId);
 }
 
 export function useMessages(conversationId: string | null) {
@@ -107,7 +190,6 @@ export function useMessages(conversationId: string | null) {
         .order("created_at", { ascending: true });
 
       if (data) {
-        // Enrich with sender profiles
         const senderIds = [...new Set(data.map((m) => m.sender_id))];
         const { data: profiles } = await supabase
           .from("profiles")
@@ -128,7 +210,6 @@ export function useMessages(conversationId: string | null) {
 
     fetchMessages();
 
-    // Subscribe to new messages
     const channel = supabase
       .channel(`messages:${conversationId}`)
       .on(
@@ -166,7 +247,6 @@ export async function sendMessage(conversationId: string, senderId: string, cont
 }
 
 export async function findOrCreateDM(currentUserId: string, targetUserId: string, leagueId: string): Promise<string | null> {
-  // Check if a DM already exists between these two users in this league
   const { data: myConvos } = await supabase
     .from("conversation_members")
     .select("conversation_id")
@@ -174,8 +254,7 @@ export async function findOrCreateDM(currentUserId: string, targetUserId: string
 
   if (myConvos && myConvos.length > 0) {
     const convoIds = myConvos.map((c) => c.conversation_id);
-    
-    // Find DM conversations in this league
+
     const { data: dmConvos } = await supabase
       .from("conversations")
       .select("id")
@@ -185,7 +264,6 @@ export async function findOrCreateDM(currentUserId: string, targetUserId: string
 
     if (dmConvos) {
       for (const convo of dmConvos) {
-        // Check if target user is also a member
         const { data: targetMember } = await supabase
           .from("conversation_members")
           .select("id")
@@ -198,7 +276,6 @@ export async function findOrCreateDM(currentUserId: string, targetUserId: string
     }
   }
 
-  // Create new DM conversation - generate ID client-side to avoid SELECT after INSERT
   const newId = crypto.randomUUID();
   const { error: convoError } = await supabase
     .from("conversations")
@@ -206,7 +283,6 @@ export async function findOrCreateDM(currentUserId: string, targetUserId: string
 
   if (convoError) return null;
 
-  // Add current user first, then the other user (sequential for RLS)
   await supabase.from("conversation_members").insert({ conversation_id: newId, user_id: currentUserId });
   await supabase.from("conversation_members").insert({ conversation_id: newId, user_id: targetUserId });
 
