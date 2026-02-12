@@ -72,12 +72,11 @@ const LeagueHubPage = () => {
     setLoading(true);
 
     try {
-      // Find league by invite code
-      const { data: league, error: findError } = await supabase
-        .from("leagues")
-        .select("id, name, max_members")
-        .eq("invite_code", inviteCode.trim().toLowerCase())
-        .maybeSingle();
+      // Find league by invite code via secure RPC
+      const { data: leagues, error: findError } = await supabase
+        .rpc("find_league_by_invite_code", { _invite_code: inviteCode.trim() });
+
+      const league = leagues && leagues.length > 0 ? leagues[0] : null;
 
       if (findError) throw findError;
       if (!league) throw new Error("No league found with that invite code.");

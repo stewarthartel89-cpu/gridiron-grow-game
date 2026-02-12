@@ -414,44 +414,17 @@ export type Database = {
       }
     }
     Views: {
-      profiles_public: {
-        Row: {
-          avatar_url: string | null
-          created_at: string | null
-          display_name: string | null
-          id: string | null
-          level: number | null
-          team_name: string | null
-          updated_at: string | null
-          user_id: string | null
-          xp: number | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          level?: number | null
-          team_name?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          xp?: number | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          level?: number | null
-          team_name?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          xp?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      find_league_by_invite_code: {
+        Args: { _invite_code: string }
+        Returns: {
+          id: string
+          max_members: number
+          name: string
+        }[]
+      }
       get_user_conversation_ids: {
         Args: { _user_id: string }
         Returns: string[]
