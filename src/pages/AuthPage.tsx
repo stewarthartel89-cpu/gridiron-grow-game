@@ -69,7 +69,7 @@ const AuthPage = () => {
           <TrendingUp className="h-7 w-7 text-primary-foreground" />
         </div>
         <h1 className="font-display text-2xl font-bold tracking-wider text-foreground">
-          CAPITAL LEAGUE
+          POGRO
         </h1>
         <p className="text-xs text-muted-foreground mt-1">Fantasy Investing</p>
       </motion.div>
