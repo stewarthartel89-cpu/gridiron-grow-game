@@ -19,6 +19,7 @@ import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import Onboarding from "./components/Onboarding";
+import MessageNotificationListener from "./components/MessageNotificationListener";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const App = () => (
         <LeagueProvider>
           <BrowserRouter>
             <AnimatedRoutes />
+            <MessageNotificationListener />
             <BottomNav />
           </BrowserRouter>
         </LeagueProvider>
