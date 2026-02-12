@@ -320,7 +320,7 @@ const SettingsPage = () => {
       <div className="min-h-screen bg-background pb-24">
         <header className="border-b border-border bg-card">
           <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-2.5">
-            <button onClick={() => navigate(-1 as any)} className="rounded-lg p-2 text-muted-foreground hover:text-foreground">
+            <button onClick={() => navigate(-1)} className="rounded-lg p-2 text-muted-foreground hover:text-foreground">
               <ChevronRight className="h-5 w-5 rotate-180" />
             </button>
             <h1 className="font-display text-lg font-bold tracking-wider text-foreground">Settings</h1>
