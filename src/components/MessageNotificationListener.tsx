@@ -1,26 +1,27 @@
-import { useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { MessageCircle } from "lucide-react";
 import { createElement } from "react";
 
-/**
- * Global listener for new messages. Shows a toast notification
- * when a message arrives in a conversation the user is part of,
- * unless they're already viewing that conversation.
- */
 const MessageNotificationListener = () => {
-  const { user } = useAuth();
-  const location = useLocation();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const convoIdsRef = useRef<Set<string>>(new Set());
   const profileCacheRef = useRef<Map<string, string>>(new Map());
+  const subscribedRef = useRef(false);
 
-  // Fetch the user's conversation IDs
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+
+  const userIdRef = useRef<string | null>(null);
+  userIdRef.current = user?.id ?? null;
+
+  // Fetch conversation IDs once user is available
   useEffect(() => {
-    if (!user) return;
+    if (!user || loading) return;
 
     const fetchConvoIds = async () => {
       const { data } = await supabase
@@ -33,31 +34,26 @@ const MessageNotificationListener = () => {
     };
 
     fetchConvoIds();
-  }, [user]);
+  }, [user?.id, loading]);
 
+  // Subscribe to realtime — stable effect, only depends on user ID
   useEffect(() => {
-    if (!user) return;
+    if (!user || loading) return;
+    if (subscribedRef.current) return;
+
+    subscribedRef.current = true;
 
     const channel = supabase
-      .channel("msg-notifications")
+      .channel(`msg-notif-${user.id}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
         async (payload) => {
           const msg = payload.new as { id: string; conversation_id: string; sender_id: string; content: string };
 
-          // Ignore own messages
-          if (msg.sender_id === user.id) return;
-
-          // Only notify for conversations the user is part of
+          if (msg.sender_id === userIdRef.current) return;
           if (!convoIdsRef.current.has(msg.conversation_id)) return;
 
-          // Don't notify if user is already viewing this conversation on the chat page
-          const onChatPage = location.pathname === "/chat";
-          // We can't easily check the active convo ID from here, so we show on chat list but not individual convos
-          // This is fine — the toast is helpful when on other pages
-
-          // Get sender name from cache or fetch
           let senderName = profileCacheRef.current.get(msg.sender_id);
           if (!senderName) {
             const { data: profile } = await supabase
@@ -76,7 +72,7 @@ const MessageNotificationListener = () => {
             icon: createElement(MessageCircle, { className: "h-4 w-4 text-primary" }),
             action: {
               label: "View",
-              onClick: () => navigate(`/chat?dm=${msg.conversation_id}`),
+              onClick: () => navigateRef.current(`/chat?dm=${msg.conversation_id}`),
             },
             duration: 5000,
           });
@@ -85,9 +81,10 @@ const MessageNotificationListener = () => {
       .subscribe();
 
     return () => {
+      subscribedRef.current = false;
       supabase.removeChannel(channel);
     };
-  }, [user, location.pathname, navigate]);
+  }, [user?.id, loading]);
 
   return null;
 };
