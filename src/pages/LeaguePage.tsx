@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PageTransition from "@/components/PageTransition";
 import LeagueHeader from "@/components/LeagueHeader";
 import WeeklyMatchups from "@/components/WeeklyMatchups";
-import Standings from "@/components/Standings";
+import MatchupDetailView from "@/components/MatchupDetailView";
 import { useLeagueData } from "@/hooks/useLeagueData";
 import { useLeague } from "@/contexts/LeagueContext";
 import { Settings as SettingsIcon, Binoculars, Swords, Trophy, Briefcase } from "lucide-react";
@@ -74,7 +74,7 @@ const LeaguePage = () => {
         {/* Tab content */}
         <main className="mx-auto max-w-2xl px-4 py-5 space-y-5">
           {tab === "portfolio" && <PortfolioContent />}
-          {tab === "matchup" && <WeeklyMatchups />}
+          {tab === "matchup" && <MatchupDetailView />}
           {tab === "scout" && <ScoutContent />}
           {tab === "league" && <LeagueInfoContent />}
         </main>
