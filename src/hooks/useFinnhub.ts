@@ -159,3 +159,81 @@ export function useSymbolSearch() {
 
   return { results, loading, search };
 }
+
+export function useCompanyNews(symbol: string | null) {
+  const [articles, setArticles] = useState<FormattedArticle[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!symbol) { setArticles([]); return; }
+    let cancelled = false;
+    setLoading(true);
+    callFinnhub("company-news", { symbols: [symbol] })
+      .then((data) => {
+        if (cancelled) return;
+        const formatted: FormattedArticle[] = ((data.articles || []) as NewsArticle[])
+          .slice(0, 10)
+          .map((a, i) => ({
+            id: `${a.id || i}`,
+            headline: a.headline,
+            source: a.source,
+            summary: a.summary,
+            url: a.url,
+            imageUrl: a.image,
+            relatedTickers: a.related ? a.related.split(",").map((t: string) => t.trim()).filter(Boolean) : [],
+            publishedAt: new Date(a.datetime * 1000),
+            category: a.category,
+          }));
+        setArticles(formatted);
+      })
+      .catch(() => setArticles([]))
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [symbol]);
+
+  return { articles, loading };
+}
+
+export interface CandleData {
+  timestamps: number[];
+  closes: number[];
+  opens: number[];
+  highs: number[];
+  lows: number[];
+  volumes: number[];
+}
+
+export function useStockCandles(symbol: string | null, resolution: string = "D", days: number = 365) {
+  const [candle, setCandle] = useState<CandleData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!symbol) { setCandle(null); return; }
+    let cancelled = false;
+    setLoading(true);
+    const now = Math.floor(Date.now() / 1000);
+    const from = now - days * 86400;
+    callFinnhub("candle", { symbols: [symbol], resolution, from, to: now })
+      .then((data) => {
+        if (cancelled) return;
+        const c = data.candle;
+        if (c && c.s === "ok") {
+          setCandle({
+            timestamps: c.t,
+            closes: c.c,
+            opens: c.o,
+            highs: c.h,
+            lows: c.l,
+            volumes: c.v,
+          });
+        } else {
+          setCandle(null);
+        }
+      })
+      .catch(() => setCandle(null))
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [symbol, resolution, days]);
+
+  return { candle, loading };
+}

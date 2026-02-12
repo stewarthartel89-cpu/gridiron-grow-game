@@ -5,10 +5,11 @@ import PageTransition from "@/components/PageTransition";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagueData } from "@/hooks/useLeagueData";
 import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
 import {
   Settings as SettingsIcon, Crown, Shield, DollarSign, Calendar, Users,
   ChevronRight, Trophy, BarChart3, LogOut, Link2, RefreshCw, Loader2,
-  Pencil, Check, X, Copy, Share2, CheckCheck,
+  Pencil, Check, X, Copy, Share2, CheckCheck, Sun, Moon,
 } from "lucide-react";
 
 /* ── Editable Field ─────────────────────────────────────── */
@@ -194,6 +195,8 @@ const InviteCodeSection = ({ code }: { code: string }) => {
   );
 };
 
+const THEME_KEY = "capital_league_theme";
+
 const SettingsPage = () => {
   const { signOut, user, session } = useAuth();
   const { settings, currentMember, loading } = useLeagueData();
@@ -201,10 +204,23 @@ const SettingsPage = () => {
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem(THEME_KEY);
+    return saved ? saved === "dark" : true; // default dark
+  });
 
   // Profile state from DB
   const [displayName, setDisplayName] = useState("");
   const [teamName, setTeamName] = useState("");
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.remove("light");
+    } else {
+      document.documentElement.classList.add("light");
+    }
+    localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
+  }, [isDark]);
 
   useEffect(() => {
     if (currentMember) {
@@ -331,6 +347,18 @@ const SettingsPage = () => {
                 value={teamName}
                 onSave={(v) => updateProfile("team_name", v)}
               />
+            </div>
+          </div>
+
+          {/* Appearance */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <h3 className="font-display text-sm font-bold text-foreground mb-3">APPEARANCE</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isDark ? <Moon className="h-4 w-4 text-primary" /> : <Sun className="h-4 w-4 text-warning" />}
+                <span className="text-sm text-foreground">{isDark ? "Dark Mode" : "Light Mode"}</span>
+              </div>
+              <Switch checked={isDark} onCheckedChange={setIsDark} />
             </div>
           </div>
 
