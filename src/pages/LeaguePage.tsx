@@ -29,9 +29,9 @@ const LeaguePage = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-[100dvh] bg-background pb-28">
         {/* Header */}
-        <header className="border-b border-border bg-card">
+        <header className="border-b border-border bg-card safe-area-top">
           <div className="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary glow-primary">
