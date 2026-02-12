@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, Users, ChevronRight, Settings as SettingsIcon } from "lucide-react";
+import { Plus, Users, ChevronRight, Settings as SettingsIcon, MessageCircle } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import StockTicker from "@/components/StockTicker";
 import { useLeague, type UserLeague } from "@/contexts/LeagueContext";
@@ -190,12 +190,15 @@ const Index = () => {
         {/* Top bar with settings */}
         <header className="border-b border-border bg-card safe-area-top">
           <div className="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
+            <button onClick={() => navigate("/settings")} className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors">
+              <SettingsIcon className="h-5 w-5" />
+            </button>
             <div className="flex items-center gap-2.5">
               <img src={pogroLogo} alt="Pogro" className="h-9 w-9 rounded-lg" />
               <h1 className="font-display text-lg font-bold tracking-wider text-foreground">Pogro</h1>
             </div>
-            <button onClick={() => navigate("/settings")} className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors">
-              <SettingsIcon className="h-5 w-5" />
+            <button onClick={() => navigate("/chat")} className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors">
+              <MessageCircle className="h-5 w-5" />
             </button>
           </div>
         </header>

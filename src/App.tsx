@@ -15,6 +15,7 @@ import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
 import LeagueHubPage from "./pages/LeagueHubPage";
 import ContactPage from "./pages/ContactPage";
+import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import Onboarding from "./components/Onboarding";
@@ -76,6 +77,7 @@ const AnimatedRoutes = () => {
           <Route path="/team/:id" element={<ProtectedRoute><LeagueGate><TeamDetail /></LeagueGate></ProtectedRoute>} />
           <Route path="/news" element={<ProtectedRoute><NewsPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
