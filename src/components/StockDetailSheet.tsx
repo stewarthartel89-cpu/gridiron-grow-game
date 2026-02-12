@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { TrendingUp, TrendingDown, ExternalLink, Loader2, Newspaper, Building2, Globe, DollarSign } from "lucide-react";
 import { useCompanyNews, useStockCandles, useCompanyProfile, type FormattedQuote, type FormattedArticle } from "@/hooks/useFinnhub";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
@@ -12,9 +12,9 @@ interface Props {
 }
 
 const TIME_PERIODS = [
-  { label: "1D", days: 1, resolution: "5" },
-  { label: "1W", days: 7, resolution: "15" },
-  { label: "1M", days: 30, resolution: "60" },
+  { label: "1D", days: 1, resolution: "D" },
+  { label: "1W", days: 7, resolution: "D" },
+  { label: "1M", days: 30, resolution: "D" },
   { label: "3M", days: 90, resolution: "D" },
   { label: "1Y", days: 365, resolution: "D" },
   { label: "5Y", days: 1825, resolution: "W" },
@@ -54,27 +54,59 @@ const NewsItem = ({ article }: { article: FormattedArticle }) => (
 
 const StockDetailSheet = ({ quote, open, onOpenChange }: Props) => {
   const symbol = quote?.symbol ?? null;
-  const [periodIdx, setPeriodIdx] = useState(4); // default 1Y
+  const [periodIdx, setPeriodIdx] = useState(0); // default 1D
   const period = TIME_PERIODS[periodIdx];
 
-  const { candle, loading: candleLoading } = useStockCandles(symbol, period.resolution, period.days);
+  // For 1D, fetch 5 days of daily data so we always have at least today + yesterday
+  const fetchDays = period.days <= 1 ? 5 : period.days;
+  const { candle, loading: candleLoading } = useStockCandles(symbol, period.resolution, fetchDays);
   const { articles, loading: newsLoading } = useCompanyNews(symbol);
   const { profile, loading: profileLoading } = useCompanyProfile(symbol);
 
   const { periodChange, chartData } = useMemo(() => {
+    // For 1D view, use quote's own daily change (matches Robinhood exactly)
+    if (period.days <= 1) {
+      if (!quote) return { periodChange: null, chartData: [] };
+      const change = { change: quote.change, pct: quote.changePct };
+      // Build a simple 2-point chart from prevClose to current
+      const chart = [
+        { date: "Prev Close", price: quote.prevClose },
+        { date: "Current", price: quote.price },
+      ];
+      // If we have candle data for today, use that instead for a richer chart
+      if (candle && candle.closes.length > 0) {
+        // Get only the last trading day's data points
+        const lastTimestamp = candle.timestamps[candle.timestamps.length - 1];
+        const dayStart = lastTimestamp - 86400;
+        const todayData = candle.timestamps
+          .map((t, i) => ({ t, price: candle.closes[i] }))
+          .filter(d => d.t >= dayStart);
+        if (todayData.length > 1) {
+          return {
+            periodChange: change,
+            chartData: todayData.map(d => ({
+              date: format(new Date(d.t * 1000), "MMM d"),
+              price: d.price,
+            })),
+          };
+        }
+      }
+      return { periodChange: change, chartData: chart };
+    }
+
     if (!candle || candle.closes.length === 0) return { periodChange: null, chartData: [] };
 
     const closes = candle.closes;
     const change = calcChange(closes);
 
-    const fmt = period.days <= 1 ? "h:mm a" : period.days <= 30 ? "MMM d" : "MMM yyyy";
+    const fmt = period.days <= 30 ? "MMM d" : "MMM yyyy";
     const chart = candle.timestamps.map((t, i) => ({
       date: format(new Date(t * 1000), fmt),
       price: closes[i],
     }));
 
     return { periodChange: change, chartData: chart };
-  }, [candle, period.days]);
+  }, [candle, period.days, quote]);
 
   if (!quote) return null;
 
@@ -86,6 +118,7 @@ const StockDetailSheet = ({ quote, open, onOpenChange }: Props) => {
       <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-2xl bg-background border-border p-0">
         <div className="px-5 pt-5 pb-2">
           <SheetHeader className="pb-0">
+            <SheetDescription className="sr-only">Stock details and chart</SheetDescription>
             <SheetTitle asChild>
               <div className="flex items-center gap-3">
                 {profile?.logo ? (
