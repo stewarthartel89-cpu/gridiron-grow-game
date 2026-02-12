@@ -318,7 +318,14 @@ const SettingsPage = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-background pb-24">
-        <LeagueHeader />
+        <header className="border-b border-border bg-card">
+          <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-2.5">
+            <button onClick={() => navigate(-1 as any)} className="rounded-lg p-2 text-muted-foreground hover:text-foreground">
+              <ChevronRight className="h-5 w-5 rotate-180" />
+            </button>
+            <h1 className="font-display text-lg font-bold tracking-wider text-foreground">Settings</h1>
+          </div>
+        </header>
         <main className="mx-auto max-w-2xl px-4 py-5 space-y-5">
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <SettingsIcon className="h-5 w-5 text-primary" />

@@ -1,20 +1,17 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, Newspaper, Trophy, Settings } from "lucide-react";
+import { Home, Trophy } from "lucide-react";
 
 const tabs = [
   { path: "/", icon: Home, label: "Home" },
-  { path: "/scout", icon: Search, label: "Scout" },
-  { path: "/news", icon: Newspaper, label: "News" },
   { path: "/league", icon: Trophy, label: "League" },
-  { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Hide on team detail pages
-  if (location.pathname.startsWith("/team/") || location.pathname === "/auth") return null;
+  // Hide on certain pages
+  if (location.pathname.startsWith("/team/") || location.pathname === "/auth" || location.pathname === "/league-hub") return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-lg safe-area-bottom">
@@ -25,7 +22,7 @@ const BottomNav = () => {
             <button
               key={path}
               onClick={() => navigate(path)}
-              className={`flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 transition-all ${
+              className={`flex flex-col items-center gap-0.5 rounded-lg px-6 py-1.5 transition-all ${
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground active:text-foreground"

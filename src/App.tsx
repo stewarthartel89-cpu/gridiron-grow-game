@@ -9,11 +9,8 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LeagueProvider, useLeague } from "@/contexts/LeagueContext";
 import Index from "./pages/Index";
 import TeamDetail from "./pages/TeamDetail";
-import LineupPage from "./pages/LineupPage";
-import ScoutPage from "./pages/ScoutPage";
-import NewsPage from "./pages/NewsPage";
 import LeaguePage from "./pages/LeaguePage";
-import SocialPage from "./pages/SocialPage";
+import NewsPage from "./pages/NewsPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
 import LeagueHubPage from "./pages/LeagueHubPage";
@@ -42,7 +39,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const LeagueGate = ({ children }: { children: React.ReactNode }) => {
-  const { leagueId, loading } = useLeague();
+  const { activeLeagueId, loading } = useLeague();
 
   if (loading) {
     return (
@@ -52,7 +49,7 @@ const LeagueGate = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!leagueId) return <LeagueHubPage />;
+  if (!activeLeagueId) return <LeagueHubPage />;
   return <>{children}</>;
 };
 
@@ -73,13 +70,11 @@ const AnimatedRoutes = () => {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/" element={<ProtectedRoute><LeagueGate><Index /></LeagueGate></ProtectedRoute>} />
-          <Route path="/team/:id" element={<ProtectedRoute><LeagueGate><TeamDetail /></LeagueGate></ProtectedRoute>} />
-          <Route path="/lineup" element={<ProtectedRoute><LeagueGate><LineupPage /></LeagueGate></ProtectedRoute>} />
-          <Route path="/scout" element={<ProtectedRoute><LeagueGate><ScoutPage /></LeagueGate></ProtectedRoute>} />
-          <Route path="/news" element={<ProtectedRoute><LeagueGate><NewsPage /></LeagueGate></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/league" element={<ProtectedRoute><LeagueGate><LeaguePage /></LeagueGate></ProtectedRoute>} />
-          <Route path="/social" element={<ProtectedRoute><LeagueGate><SocialPage /></LeagueGate></ProtectedRoute>} />
+          <Route path="/league-hub" element={<ProtectedRoute><LeagueHubPage /></ProtectedRoute>} />
+          <Route path="/team/:id" element={<ProtectedRoute><LeagueGate><TeamDetail /></LeagueGate></ProtectedRoute>} />
+          <Route path="/news" element={<ProtectedRoute><NewsPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="*" element={<NotFound />} />
