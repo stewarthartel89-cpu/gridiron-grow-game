@@ -1,7 +1,7 @@
 import { useState, memo } from "react";
-import LeagueHeader from "@/components/LeagueHeader";
+import { useNavigate } from "react-router-dom";
 import PageTransition from "@/components/PageTransition";
-import { Newspaper, Clock, RefreshCw, ExternalLink, AlertCircle } from "lucide-react";
+import { Newspaper, Clock, RefreshCw, ExternalLink, AlertCircle, ArrowLeft } from "lucide-react";
 import { useMarketNews, type FormattedArticle } from "@/hooks/useFinnhub";
 
 type NewsCategory = "general" | "forex" | "crypto" | "merger";
@@ -73,11 +73,19 @@ ArticleCard.displayName = "ArticleCard";
 const NewsPage = () => {
   const [category, setCategory] = useState<NewsCategory>("general");
   const { articles, loading, error, refetch } = useMarketNews(category);
+  const navigate = useNavigate();
 
   return (
     <PageTransition>
       <div className="min-h-screen bg-background pb-24">
-        <LeagueHeader />
+        <header className="border-b border-border bg-card safe-area-top">
+          <div className="mx-auto max-w-2xl px-2 py-3 flex items-center gap-2">
+            <button onClick={() => navigate(-1)} className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors">
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h1 className="font-display text-lg font-bold text-foreground">Market News</h1>
+          </div>
+        </header>
         <main className="mx-auto max-w-2xl px-4 py-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
