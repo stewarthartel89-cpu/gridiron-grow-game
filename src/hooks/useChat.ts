@@ -198,20 +198,17 @@ export async function findOrCreateDM(currentUserId: string, targetUserId: string
     }
   }
 
-  // Create new DM conversation
-  const { data: newConvo, error: convoError } = await supabase
+  // Create new DM conversation - generate ID client-side to avoid SELECT after INSERT
+  const newId = crypto.randomUUID();
+  const { error: convoError } = await supabase
     .from("conversations")
-    .insert({ league_id: leagueId, type: "dm", name: null })
-    .select("id")
-    .single();
+    .insert({ id: newId, league_id: leagueId, type: "dm", name: null });
 
-  if (convoError || !newConvo) return null;
+  if (convoError) return null;
 
-  // Add both members
-  await supabase.from("conversation_members").insert([
-    { conversation_id: newConvo.id, user_id: currentUserId },
-    { conversation_id: newConvo.id, user_id: targetUserId },
-  ]);
+  // Add current user first, then the other user (sequential for RLS)
+  await supabase.from("conversation_members").insert({ conversation_id: newId, user_id: currentUserId });
+  await supabase.from("conversation_members").insert({ conversation_id: newId, user_id: targetUserId });
 
-  return newConvo.id;
+  return newId;
 }
