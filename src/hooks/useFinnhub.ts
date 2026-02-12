@@ -128,7 +128,7 @@ export function useMarketNews(category: string = "general") {
 
   useEffect(() => {
     fetchNews();
-    const interval = setInterval(fetchNews, 5 * 60_000); // refresh every 5 min
+    const interval = setInterval(fetchNews, 2 * 60_000); // refresh every 2 min
     return () => clearInterval(interval);
   }, [fetchNews]);
 
