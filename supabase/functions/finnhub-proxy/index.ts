@@ -22,7 +22,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, symbols, category } = await req.json();
+    const { action, symbols, category, ...payload } = await req.json();
 
     if (action === "quotes") {
       // Fetch quotes for multiple symbols
@@ -74,6 +74,39 @@ serve(async (req) => {
       const res = await fetch(`${FINNHUB_BASE}/search?q=${query}&token=${apiKey}`);
       const data = await res.json();
       return new Response(JSON.stringify({ results: data.result || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "candle") {
+      const symbol = symbols?.[0];
+      if (!symbol) {
+        return new Response(JSON.stringify({ error: "Symbol required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { resolution, from: fromTs, to: toTs } = payload || {};
+      const res = await fetch(
+        `${FINNHUB_BASE}/stock/candle?symbol=${symbol}&resolution=${resolution || "D"}&from=${fromTs}&to=${toTs}&token=${apiKey}`
+      );
+      const data = await res.json();
+      return new Response(JSON.stringify({ candle: data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "profile") {
+      const symbol = symbols?.[0];
+      if (!symbol) {
+        return new Response(JSON.stringify({ error: "Symbol required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const res = await fetch(`${FINNHUB_BASE}/stock/profile2?symbol=${symbol}&token=${apiKey}`);
+      const data = await res.json();
+      return new Response(JSON.stringify({ profile: data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

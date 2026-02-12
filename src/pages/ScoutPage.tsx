@@ -3,6 +3,7 @@ import LeagueHeader from "@/components/LeagueHeader";
 import PageTransition from "@/components/PageTransition";
 import { Search, TrendingUp, TrendingDown, ExternalLink, RefreshCw, AlertCircle, SlidersHorizontal, ArrowUpDown, ChevronDown, Globe, Landmark } from "lucide-react";
 import { useStockQuotes, useSymbolSearch, type FormattedQuote } from "@/hooks/useFinnhub";
+import StockDetailSheet from "@/components/StockDetailSheet";
 
 // Symbol -> sector mapping
 const STOCK_SECTORS: Record<string, string> = {
@@ -10,15 +11,11 @@ const STOCK_SECTORS: Record<string, string> = {
   AMZN: "Consumer", TSLA: "Consumer",
   COIN: "Crypto", SOFI: "Financials", JPM: "Financials",
   PFE: "Healthcare", XOM: "Energy",
-  // International stocks
   VXUS: "International", EFA: "International", VEA: "International", IEMG: "International", EEM: "International",
-  // US Bond ETFs (all available on Robinhood)
   BND: "Bonds", AGG: "Bonds", TLT: "Bonds", SHY: "Bonds", IEF: "Bonds", VCIT: "Bonds", LQD: "Bonds",
-  // International Bond ETFs (all available on Robinhood)
   BNDX: "Intl Bonds", IAGG: "Intl Bonds", EMB: "Intl Bonds", VWOB: "Intl Bonds",
 };
 
-// Region classification
 const SYMBOL_REGION: Record<string, "US" | "International"> = {
   AAPL: "US", NVDA: "US", MSFT: "US", GOOGL: "US", META: "US",
   AMZN: "US", TSLA: "US", COIN: "US", SOFI: "US", JPM: "US",
@@ -28,7 +25,6 @@ const SYMBOL_REGION: Record<string, "US" | "International"> = {
   BNDX: "International", IAGG: "International", EMB: "International", VWOB: "International",
 };
 
-// Asset type classification
 const SYMBOL_ASSET_TYPE: Record<string, "Stocks" | "Bonds"> = {
   AAPL: "Stocks", NVDA: "Stocks", MSFT: "Stocks", GOOGL: "Stocks", META: "Stocks",
   AMZN: "Stocks", TSLA: "Stocks", COIN: "Stocks", SOFI: "Stocks", JPM: "Stocks",
@@ -54,20 +50,20 @@ const ASSET_TYPE_OPTIONS = [
   { value: "Bonds", label: "Bonds" },
 ];
 
-type SortOption = "default" | "top-gainers" | "top-losers" | "price-high" | "price-low";
+type SortOption = "weekly-growth" | "top-gainers" | "top-losers" | "price-high" | "price-low";
 
 const sortOptions: { value: SortOption; label: string }[] = [
-  { value: "default", label: "Default" },
-  { value: "top-gainers", label: "Top Gainers" },
-  { value: "top-losers", label: "Biggest Losers" },
+  { value: "weekly-growth", label: "Weekly Growth" },
+  { value: "top-gainers", label: "Top Gainers (Today)" },
+  { value: "top-losers", label: "Biggest Losers (Today)" },
   { value: "price-high", label: "Price: High → Low" },
   { value: "price-low", label: "Price: Low → High" },
 ];
 
-const QuoteCard = memo(({ quote }: { quote: FormattedQuote }) => {
+const QuoteCard = memo(({ quote, onClick }: { quote: FormattedQuote; onClick: () => void }) => {
   const isUp = quote.changePct >= 0;
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <button onClick={onClick} className="w-full text-left rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary font-display text-[11px] font-bold text-secondary-foreground">
@@ -90,17 +86,12 @@ const QuoteCard = memo(({ quote }: { quote: FormattedQuote }) => {
       </div>
       <div className="mt-3 flex items-center justify-between">
         <span className="text-[10px] text-muted-foreground">Prev Close: ${quote.prevClose.toFixed(2)}</span>
-        <a
-          href={`https://robinhood.com/stocks/${quote.symbol}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 rounded-lg bg-gain/10 px-2.5 py-1 text-[10px] font-semibold text-gain"
-        >
+        <span className="flex items-center gap-1 rounded-lg bg-gain/10 px-2.5 py-1 text-[10px] font-semibold text-gain">
           <ExternalLink className="h-3 w-3" />
-          View on Robinhood
-        </a>
+          Tap for details
+        </span>
       </div>
-    </div>
+    </button>
   );
 });
 QuoteCard.displayName = "QuoteCard";
@@ -146,10 +137,11 @@ const DropdownSelect = ({ value, options, onChange, icon: Icon }: {
 const ScoutPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const [symbols, setSymbols] = useState(WATCHED_SYMBOLS);
-  const [sort, setSort] = useState<SortOption>("default");
+  const [sort, setSort] = useState<SortOption>("weekly-growth");
   const [sector, setSector] = useState("All Sectors");
   const [region, setRegion] = useState("All");
   const [assetType, setAssetType] = useState("All");
+  const [selectedQuote, setSelectedQuote] = useState<FormattedQuote | null>(null);
   const { quotes, loading, error, refetch } = useStockQuotes(symbols);
   const { results: searchResults, search, loading: searchLoading } = useSymbolSearch();
 
@@ -165,23 +157,21 @@ const ScoutPage = () => {
       result = result.filter((q) => q.symbol.toLowerCase().includes(searchInput.toLowerCase()));
     }
 
-    // Sector filter
     if (sector !== "All Sectors") {
       result = result.filter((q) => STOCK_SECTORS[q.symbol] === sector);
     }
 
-    // Region filter
     if (region !== "All") {
       result = result.filter((q) => SYMBOL_REGION[q.symbol] === region);
     }
 
-    // Asset type filter
     if (assetType !== "All") {
       result = result.filter((q) => SYMBOL_ASSET_TYPE[q.symbol] === assetType);
     }
 
-    // Sort
+    // Sort — weekly-growth uses changePct as proxy (daily % change from Finnhub quote)
     switch (sort) {
+      case "weekly-growth":
       case "top-gainers": result.sort((a, b) => b.changePct - a.changePct); break;
       case "top-losers": result.sort((a, b) => a.changePct - b.changePct); break;
       case "price-high": result.sort((a, b) => b.price - a.price); break;
@@ -217,7 +207,7 @@ const ScoutPage = () => {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search stocks by symbol..."
+              placeholder="Search any stock or bond by symbol..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
@@ -265,9 +255,9 @@ const ScoutPage = () => {
               onChange={setAssetType}
               icon={Landmark}
             />
-            {(sector !== "All Sectors" || sort !== "default" || region !== "All" || assetType !== "All") && (
+            {(sector !== "All Sectors" || sort !== "weekly-growth" || region !== "All" || assetType !== "All") && (
               <button
-                onClick={() => { setSector("All Sectors"); setSort("default"); setRegion("All"); setAssetType("All"); }}
+                onClick={() => { setSector("All Sectors"); setSort("weekly-growth"); setRegion("All"); setAssetType("All"); }}
                 className="text-[10px] font-semibold text-primary"
               >
                 Clear
@@ -292,7 +282,7 @@ const ScoutPage = () => {
           ) : (
             <div className="space-y-2.5">
               {processedQuotes.map((quote) => (
-                <QuoteCard key={quote.symbol} quote={quote} />
+                <QuoteCard key={quote.symbol} quote={quote} onClick={() => setSelectedQuote(quote)} />
               ))}
               {processedQuotes.length === 0 && (
                 <div className="py-12 text-center">
@@ -308,6 +298,12 @@ const ScoutPage = () => {
           </p>
         </main>
       </div>
+
+      <StockDetailSheet
+        quote={selectedQuote}
+        open={!!selectedQuote}
+        onOpenChange={(open) => { if (!open) setSelectedQuote(null); }}
+      />
     </PageTransition>
   );
 };
