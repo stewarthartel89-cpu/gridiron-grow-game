@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Send, Users, User } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import { useAuth } from "@/contexts/AuthContext";
-import { useConversations, useMessages, sendMessage, type Conversation } from "@/hooks/useChat";
+import { useConversations, useMessages, sendMessage, markConversationRead, type Conversation } from "@/hooks/useChat";
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -21,8 +20,6 @@ const ConversationList = ({ conversations, loading, onSelect }: {
   loading: boolean;
   onSelect: (c: Conversation) => void;
 }) => {
-  const navigate = useNavigate();
-
   if (loading) {
     return (
       <div className="space-y-3 p-4">
@@ -59,24 +56,31 @@ const ConversationList = ({ conversations, loading, onSelect }: {
             onClick={() => onSelect(c)}
             className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-accent/50 transition-colors"
           >
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${isGroup ? "bg-primary/15" : "bg-secondary"}`}>
-              {isGroup ? (
-                <Users className="h-5 w-5 text-primary" />
-              ) : c.otherUser?.avatar_url ? (
-                <img src={c.otherUser.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
-              ) : (
-                <User className="h-5 w-5 text-muted-foreground" />
+            <div className="relative">
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${isGroup ? "bg-primary/15" : "bg-secondary"}`}>
+                {isGroup ? (
+                  <Users className="h-5 w-5 text-primary" />
+                ) : c.otherUser?.avatar_url ? (
+                  <img src={c.otherUser.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
+                ) : (
+                  <User className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+              {c.unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                  {c.unreadCount > 99 ? "99+" : c.unreadCount}
+                </span>
               )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-foreground truncate">{displayName}</span>
+                <span className={`text-sm truncate ${c.unreadCount > 0 ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>{displayName}</span>
                 {c.lastMessageAt && (
-                  <span className="text-[10px] text-muted-foreground ml-2 shrink-0">{timeAgo(c.lastMessageAt)}</span>
+                  <span className={`text-[10px] ml-2 shrink-0 ${c.unreadCount > 0 ? "text-primary font-semibold" : "text-muted-foreground"}`}>{timeAgo(c.lastMessageAt)}</span>
                 )}
               </div>
               {c.lastMessage && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{c.lastMessage}</p>
+                <p className={`text-xs truncate mt-0.5 ${c.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>{c.lastMessage}</p>
               )}
             </div>
           </button>
@@ -97,6 +101,20 @@ const MessageView = ({ conversation, onBack }: { conversation: Conversation; onB
   const isGroup = conversation.type === "group";
   const title = isGroup ? (conversation.name || "League Chat") : (conversation.otherUser?.display_name || "Player");
 
+  // Mark as read when opening conversation
+  useEffect(() => {
+    if (user && conversation.id) {
+      markConversationRead(conversation.id, user.id);
+    }
+  }, [user, conversation.id]);
+
+  // Also mark as read when new messages arrive
+  useEffect(() => {
+    if (user && conversation.id && messages.length > 0) {
+      markConversationRead(conversation.id, user.id);
+    }
+  }, [messages.length, user, conversation.id]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
@@ -112,7 +130,6 @@ const MessageView = ({ conversation, onBack }: { conversation: Conversation; onB
 
   return (
     <div className="flex flex-col h-[100dvh] bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card safe-area-top shrink-0">
         <div className="mx-auto max-w-2xl px-2 py-3 flex items-center gap-2">
           <button onClick={onBack} className="rounded-lg p-2 text-primary active:bg-accent transition-colors">
@@ -163,7 +180,6 @@ const MessageView = ({ conversation, onBack }: { conversation: Conversation; onB
         )}
       </div>
 
-      {/* Input */}
       <div className="border-t border-border bg-card px-3 py-2 safe-area-bottom shrink-0">
         <div className="mx-auto max-w-2xl flex items-center gap-2">
           <input
@@ -190,10 +206,9 @@ const MessageView = ({ conversation, onBack }: { conversation: Conversation; onB
 const ChatPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { conversations, loading } = useConversations();
+  const { conversations, loading, refetch } = useConversations();
   const [activeConvo, setActiveConvo] = useState<Conversation | null>(null);
 
-  // Auto-open a DM if navigated with ?dm=conversationId
   useEffect(() => {
     const dmId = searchParams.get("dm");
     if (dmId && conversations.length > 0 && !activeConvo) {
@@ -203,7 +218,7 @@ const ChatPage = () => {
   }, [searchParams, conversations, activeConvo]);
 
   if (activeConvo) {
-    return <MessageView conversation={activeConvo} onBack={() => { setActiveConvo(null); navigate("/chat", { replace: true }); }} />;
+    return <MessageView conversation={activeConvo} onBack={() => { setActiveConvo(null); navigate("/chat", { replace: true }); refetch(); }} />;
   }
 
   return (

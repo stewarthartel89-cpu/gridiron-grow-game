@@ -7,6 +7,7 @@ import MatchupDetailView from "@/components/MatchupDetailView";
 import { useLeagueData } from "@/hooks/useLeagueData";
 import { useLeague } from "@/contexts/LeagueContext";
 import { Settings as SettingsIcon, Binoculars, Swords, Trophy, Briefcase, MessageCircle } from "lucide-react";
+import { useUnreadCount } from "@/hooks/useChat";
 
 // Import Scout page content inline
 import ScoutContent from "@/components/ScoutContent";
@@ -26,6 +27,7 @@ const LeaguePage = () => {
   const [tab, setTab] = useState<TabKey>("portfolio");
   const navigate = useNavigate();
   const { leagueName } = useLeague();
+  const unreadCount = useUnreadCount();
 
   return (
     <PageTransition>
@@ -49,9 +51,14 @@ const LeaguePage = () => {
             </div>
             <button
               onClick={() => navigate("/chat")}
-              className="rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors"
+              className="relative rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors"
             >
               <MessageCircle className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </button>
           </div>
         </header>
