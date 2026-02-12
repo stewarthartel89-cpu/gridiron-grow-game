@@ -6,7 +6,7 @@ const LeagueHeader = () => {
 
   if (loading || !settings) {
     return (
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card safe-area-top">
         <div className="mx-auto max-w-2xl px-4 py-3">
           <div className="h-9 w-48 animate-pulse rounded-lg bg-secondary" />
         </div>
@@ -15,7 +15,7 @@ const LeagueHeader = () => {
   }
 
   return (
-    <header className="border-b border-border bg-card">
+    <header className="border-b border-border bg-card safe-area-top">
       <div className="mx-auto max-w-2xl px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
