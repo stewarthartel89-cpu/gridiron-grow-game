@@ -5,7 +5,7 @@ import { TrendingUp, Target, Trophy, Users, Zap, ChevronRight, Check } from "luc
 const steps = [
   {
     icon: TrendingUp,
-    title: "WELCOME TO CAPITAL LEAGUE",
+    title: "WELCOME TO POGRO",
     subtitle: "Fantasy Investing",
     description: "Compete with friends in weekly head-to-head matchups based on real portfolio growth. Keep every dollar you invest.",
     accent: "primary" as const,

@@ -147,10 +147,10 @@ const InviteCodeSection = ({ code }: { code: string }) => {
   };
 
   const shareInvite = async () => {
-    const text = `Join my Capital League! Use invite code: ${code}`;
+    const text = `Join me on Pogro! Use invite code: ${code}`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Join Capital League", text });
+        await navigator.share({ title: "Join Pogro", text });
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(text);

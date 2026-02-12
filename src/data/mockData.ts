@@ -264,7 +264,7 @@ export interface LeagueSettings {
 }
 
 export const leagueSettings: LeagueSettings = {
-  name: "Capital League",
+  name: "Pogro League",
   weeklyDeposit: 50,
   seasonLength: 17,
   currentWeek: 13,
