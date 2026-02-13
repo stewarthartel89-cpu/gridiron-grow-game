@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import LeagueHeader from "@/components/LeagueHeader";
 import PageTransition from "@/components/PageTransition";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLeague } from "@/contexts/LeagueContext";
 import { useLeagueData } from "@/hooks/useLeagueData";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
@@ -200,6 +201,7 @@ const THEME_KEY = "capital_league_theme";
 const SettingsPage = () => {
   const { signOut, user, session } = useAuth();
   const { settings, currentMember, loading } = useLeagueData();
+  const { leagueId: activeLeagueId } = useLeague();
   const navigate = useNavigate();
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -249,18 +251,11 @@ const SettingsPage = () => {
   };
 
   const updateLeague = async (field: string, value: string | number | boolean) => {
-    if (!settings || !isCommissioner) return;
-    // We need the league id — fetch from context
-    const { data } = await supabase
-      .from("leagues")
-      .select("id")
-      .eq("commissioner_id", user!.id)
-      .maybeSingle();
-    if (!data) return;
+    if (!settings || !isCommissioner || !activeLeagueId) return;
     const { error } = await supabase
       .from("leagues")
       .update({ [field]: value })
-      .eq("id", data.id);
+      .eq("id", activeLeagueId);
     if (error) console.error("League update error:", error);
   };
 
@@ -412,7 +407,7 @@ const SettingsPage = () => {
                   onSave={async (v) => { await updateLeague("season_length", parseInt(v.replace(" weeks", "")) || 17); }}
                 />
                 <CommissionerRow
-                  icon={Shield} label="Diversification Tier" value={settings.diversityStrictness}
+                  icon={Shield} label="Diversification Tier" value={{ relaxed: "Cautious (50/50)", standard: "Moderate (65/35)", strict: "Aggressive (80/20)" }[settings.diversityStrictness] || settings.diversityStrictness}
                   color="text-gain" editable={!!isCommissioner}
                   options={[
                     { value: "relaxed", label: "Cautious (50/50)" },
