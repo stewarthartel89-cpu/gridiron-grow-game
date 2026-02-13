@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import LeagueHeader from "@/components/LeagueHeader";
 import WeeklyMatchups from "@/components/WeeklyMatchups";
@@ -72,28 +73,36 @@ const LeaguePage = () => {
               </button>
 
               {/* Dropdown menu */}
-              {dropdownOpen && leagues.length > 1 && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden">
-                  {leagues.map((l) => (
-                    <button
-                      key={l.leagueId}
-                      onClick={() => {
-                        setActiveLeague(l.leagueId);
-                        setDropdownOpen(false);
-                      }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent active:bg-accent"
-                    >
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                        <Trophy className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <span className="flex-1 font-semibold text-foreground truncate">{l.leagueName}</span>
-                      {l.leagueId === activeLeagueId && (
-                        <Check className="h-4 w-4 text-primary shrink-0" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <AnimatePresence>
+                {dropdownOpen && leagues.length > 1 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                    className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden"
+                  >
+                    {leagues.map((l) => (
+                      <button
+                        key={l.leagueId}
+                        onClick={() => {
+                          setActiveLeague(l.leagueId);
+                          setDropdownOpen(false);
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent active:bg-accent"
+                      >
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                          <Trophy className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <span className="flex-1 font-semibold text-foreground truncate">{l.leagueName}</span>
+                        {l.leagueId === activeLeagueId && (
+                          <Check className="h-4 w-4 text-primary shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <button
