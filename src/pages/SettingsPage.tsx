@@ -9,10 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import {
   Settings as SettingsIcon, Crown, Shield, DollarSign, Calendar, Users,
   ChevronRight, Trophy, BarChart3, LogOut, Link2, RefreshCw, Loader2,
-  Pencil, Check, X, Copy, Share2, CheckCheck, Sun, Moon, Trash2,
+  Pencil, Check, X, Copy, Share2, CheckCheck, Sun, Moon,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useLeague } from "@/contexts/LeagueContext";
 
 /* ── Editable Field ─────────────────────────────────────── */
 const EditableField = ({
@@ -233,44 +231,10 @@ const SettingsPage = () => {
 
   const isCommissioner = settings && user && settings.commissionerId === user.id;
 
-  const { toast } = useToast();
-  const { refetch } = useLeague();
-  const [showTerminateConfirm, setShowTerminateConfirm] = useState(false);
-  const [terminating, setTerminating] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
-  };
-
-  const handleTerminateLeague = async () => {
-    if (!user || !isCommissioner) return;
-    setTerminating(true);
-    try {
-      const { data } = await supabase
-        .from("leagues")
-        .select("id")
-        .eq("commissioner_id", user.id)
-        .maybeSingle();
-      if (!data) throw new Error("League not found");
-
-      // Delete league members first, then league (cascade should handle but be explicit)
-      await supabase.from("league_members").delete().eq("league_id", data.id);
-      await supabase.from("matchups").delete().eq("league_id", data.id);
-      await supabase.from("holdings").delete().eq("league_id", data.id);
-      await supabase.from("activity_feed").delete().eq("league_id", data.id);
-      const { error } = await supabase.from("leagues").delete().eq("id", data.id);
-      if (error) throw error;
-
-      toast({ title: "League terminated", description: "The league has been permanently deleted." });
-      await refetch();
-      navigate("/league-hub");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setTerminating(false);
-      setShowTerminateConfirm(false);
-    }
   };
 
   const updateProfile = async (field: string, value: string) => {
@@ -514,41 +478,8 @@ const SettingsPage = () => {
             <InviteCodeSection code={settings.inviteCode} />
           )}
 
-          {/* Terminate League — Commissioner only */}
-          {isCommissioner && (
-            <div className="rounded-xl border border-loss/30 bg-card overflow-hidden">
-              {!showTerminateConfirm ? (
-                <button
-                  onClick={() => setShowTerminateConfirm(true)}
-                  className="flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold text-loss active:bg-loss/10"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Terminate League
-                </button>
-              ) : (
-                <div className="p-4 space-y-3">
-                  <p className="text-sm text-loss font-semibold text-center">Are you sure? This is permanent.</p>
-                  <p className="text-xs text-muted-foreground text-center">All members, matchups, holdings, and league data will be deleted.</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowTerminateConfirm(false)}
-                      className="flex-1 rounded-lg border border-border py-2.5 text-sm font-semibold text-foreground active:bg-accent"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleTerminateLeague}
-                      disabled={terminating}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-loss py-2.5 text-sm font-semibold text-white active:bg-loss/80 disabled:opacity-50"
-                    >
-                      {terminating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                      {terminating ? "Deleting…" : "Confirm Delete"}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+
+
 
           {/* Sign Out */}
           <button
