@@ -1,7 +1,9 @@
 import { useState, useMemo } from "react";
 import { leagueMembers, Sector } from "@/data/mockData";
-import { ArrowRightLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowRightLeft, TrendingUp, TrendingDown, Zap } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { calculateDiversification } from "@/lib/diversificationModifier";
+import DiversificationModifier from "@/components/DiversificationModifier";
 
 const SECTOR_COLORS: Record<Sector, string> = {
   "Tech": "bg-[hsl(200,70%,50%)]",
@@ -80,11 +82,16 @@ const PortfolioContent = () => {
   const isUp = growthPct >= 0;
   const dollarChange = (growthPct / 100) * totalBalance;
 
+  // Calculate diversification modifier
+  const divResult = useMemo(() => calculateDiversification(me.holdings), [me.holdings]);
+  const gameScore = growthPct * divResult.modifier;
+  const gameScoreUp = gameScore >= 0;
+
   const allHoldings = me.holdings;
 
   return (
     <>
-      {/* Balance + Growth */}
+      {/* Balance + Growth + Game Score */}
       <div className="text-center space-y-1">
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Portfolio Balance</p>
         <h2 className="font-display text-3xl font-bold text-foreground tracking-tight">
@@ -95,6 +102,35 @@ const PortfolioContent = () => {
           <span className={`text-sm font-semibold ${isUp ? "text-gain" : "text-loss"}`}>
             {isUp ? "+" : ""}{dollarChange.toFixed(2)} ({isUp ? "+" : ""}{growthPct.toFixed(2)}%)
           </span>
+        </div>
+      </div>
+
+      {/* Game Score Bar */}
+      <div className="rounded-xl border border-border bg-card p-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Weekly Growth</span>
+              <span className={`font-display text-lg font-bold ${isUp ? "text-gain" : "text-loss"}`}>
+                {isUp ? "+" : ""}{growthPct.toFixed(2)}%
+              </span>
+            </div>
+            <span className="text-muted-foreground font-display text-lg">×</span>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Modifier</span>
+              <span className={`font-display text-lg font-bold ${divResult.modifier >= 1 ? "text-gain" : divResult.modifier >= 0.9 ? "text-warning" : "text-loss"}`}>
+                {divResult.modifier.toFixed(2)}x
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1">
+              <Zap className="h-3 w-3" /> Game Score
+            </span>
+            <span className={`font-display text-2xl font-bold ${gameScoreUp ? "text-gain" : "text-loss"}`}>
+              {gameScoreUp ? "+" : ""}{gameScore.toFixed(2)}%
+            </span>
+          </div>
         </div>
       </div>
 
@@ -204,6 +240,9 @@ const PortfolioContent = () => {
           })}
         </div>
       </div>
+
+      {/* Diversification Modifier */}
+      <DiversificationModifier result={divResult} />
     </>
   );
 };
