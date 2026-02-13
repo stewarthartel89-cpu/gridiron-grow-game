@@ -417,6 +417,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_dm_conversation: {
+        Args: {
+          _current_user_id: string
+          _league_id: string
+          _target_user_id: string
+        }
+        Returns: string
+      }
       find_league_by_invite_code: {
         Args: { _invite_code: string }
         Returns: {

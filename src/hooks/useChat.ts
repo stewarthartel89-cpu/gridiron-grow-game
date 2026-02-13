@@ -247,44 +247,16 @@ export async function sendMessage(conversationId: string, senderId: string, cont
 }
 
 export async function findOrCreateDM(currentUserId: string, targetUserId: string, leagueId: string): Promise<string | null> {
-  const { data: myConvos } = await supabase
-    .from("conversation_members")
-    .select("conversation_id")
-    .eq("user_id", currentUserId);
+  const { data, error } = await supabase.rpc("create_dm_conversation", {
+    _current_user_id: currentUserId,
+    _target_user_id: targetUserId,
+    _league_id: leagueId,
+  });
 
-  if (myConvos && myConvos.length > 0) {
-    const convoIds = myConvos.map((c) => c.conversation_id);
-
-    const { data: dmConvos } = await supabase
-      .from("conversations")
-      .select("id")
-      .in("id", convoIds)
-      .eq("type", "dm")
-      .eq("league_id", leagueId);
-
-    if (dmConvos) {
-      for (const convo of dmConvos) {
-        const { data: targetMember } = await supabase
-          .from("conversation_members")
-          .select("id")
-          .eq("conversation_id", convo.id)
-          .eq("user_id", targetUserId)
-          .maybeSingle();
-
-        if (targetMember) return convo.id;
-      }
-    }
+  if (error) {
+    console.error("Failed to create DM:", error.message);
+    return null;
   }
 
-  const newId = crypto.randomUUID();
-  const { error: convoError } = await supabase
-    .from("conversations")
-    .insert({ id: newId, league_id: leagueId, type: "dm", name: null });
-
-  if (convoError) return null;
-
-  await supabase.from("conversation_members").insert({ conversation_id: newId, user_id: currentUserId });
-  await supabase.from("conversation_members").insert({ conversation_id: newId, user_id: targetUserId });
-
-  return newId;
+  return data as string;
 }
