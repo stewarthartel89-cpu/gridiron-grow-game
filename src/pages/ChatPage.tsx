@@ -218,7 +218,7 @@ const ChatPage = () => {
   }, [searchParams, conversations, activeConvo]);
 
   if (activeConvo) {
-    return <MessageView conversation={activeConvo} onBack={() => { setActiveConvo(null); navigate("/chat", { replace: true }); refetch(); }} />;
+    return <MessageView conversation={activeConvo} onBack={() => { setActiveConvo(null); refetch(); if (searchParams.get("dm")) { navigate("/chat", { replace: true }); } }} />;
   }
 
   return (
