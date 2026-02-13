@@ -1,44 +1,30 @@
 import { useMemo } from "react";
-import { LeagueMember, Holding, weeklyMatchups, leagueMembers } from "@/data/mockData";
+import { LeagueMember, Holding, weeklyMatchups } from "@/data/mockData";
 import { classifyHolding, AssetBucket, BUCKETS, calculateDiversification } from "@/lib/diversificationModifier";
 import { TrendingUp, TrendingDown, Shield } from "lucide-react";
 
 /** Group holdings by diversity bucket */
 function groupByBucket(holdings: Holding[]): Record<AssetBucket, Holding[]> {
-  const groups: Record<AssetBucket, Holding[]> = {
-    Stocks: [],
-    ETFs: [],
-  };
+  const groups: Record<AssetBucket, Holding[]> = { Stocks: [], ETFs: [] };
   for (const h of holdings) {
     groups[classifyHolding(h.sector)].push(h);
   }
   return groups;
 }
 
-/** Simple win-probability estimate based on adjusted growth difference */
 function winProbability(home: LeagueMember, away: LeagueMember): number {
   const hAdj = home.weeklyGrowthPct * home.gameModifiers.totalMultiplier;
   const aAdj = away.weeklyGrowthPct * away.gameModifiers.totalMultiplier;
   const diff = hAdj - aAdj;
-  // Sigmoid-ish: clamp between 5-95%
   const raw = 50 + diff * 8;
   return Math.max(5, Math.min(95, Math.round(raw)));
 }
 
-const HoldingRow = ({
-  home,
-  away,
-  bucket,
-}: {
-  home: Holding | null;
-  away: Holding | null;
-  bucket: AssetBucket;
-}) => {
+const HoldingRow = ({ home, away, bucket }: { home: Holding | null; away: Holding | null; bucket: AssetBucket }) => {
   const growthPct = (h: Holding) => ((h.currentPrice - h.avgCost) / h.avgCost) * 100;
 
   return (
     <div className="flex items-center gap-1 py-2 px-2">
-      {/* Home holding */}
       <div className="flex-1 min-w-0">
         {home ? (
           <div className="flex items-center gap-2">
@@ -57,15 +43,11 @@ const HoldingRow = ({
           <p className="text-[10px] text-muted-foreground/40 italic">—</p>
         )}
       </div>
-
-      {/* Center badge */}
-      <div className="shrink-0 w-10 flex justify-center">
-        <span className="text-[8px] font-bold text-muted-foreground bg-secondary rounded px-1 py-0.5">
+      <div className="shrink-0 w-8 flex justify-center">
+        <span className="text-[7px] font-bold text-muted-foreground bg-secondary rounded px-1 py-0.5">
           {bucket === "Stocks" ? "STK" : "ETF"}
         </span>
       </div>
-
-      {/* Away holding */}
       <div className="flex-1 min-w-0">
         {away ? (
           <div className="flex items-center gap-2 flex-row-reverse">
@@ -100,13 +82,12 @@ const MatchupDetailView = () => {
 
   if (!matchup || !home || !away) return <p className="text-sm text-muted-foreground text-center py-8">No matchup this week.</p>;
 
-  const homeAdj = home.weeklyGrowthPct * home.gameModifiers.totalMultiplier;
-  const awayAdj = away.weeklyGrowthPct * away.gameModifiers.totalMultiplier;
+  const homeScore = home.weeklyGrowthPct * homeDiv.modifier;
+  const awayScore = away.weeklyGrowthPct * awayDiv.modifier;
   const homeWinPct = winProbability(home, away);
   const awayWinPct = 100 - homeWinPct;
-  const homeWinning = homeAdj >= awayAdj;
+  const homeWinning = homeScore >= awayScore;
 
-  // Build matched rows per bucket
   const bucketRows = BUCKETS.map((bucket) => {
     const hList = homeGroups[bucket];
     const aList = awayGroups[bucket];
@@ -119,106 +100,64 @@ const MatchupDetailView = () => {
   }).filter((b) => b.rows.length > 0);
 
   return (
-    <div className="space-y-4">
-      {/* Scoreboard */}
+    <div className="space-y-3">
+      {/* Compact Scoreboard + Game Score */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-4">
-          {/* Home */}
-          <div className="flex items-center gap-2.5">
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold ${
-              homeWinning ? "bg-primary text-primary-foreground ring-2 ring-primary/40" : "bg-secondary text-secondary-foreground"
+        {/* Team Headers */}
+        <div className="flex items-center justify-between px-3 py-3">
+          <div className="flex items-center gap-2">
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold ${
+              homeWinning ? "bg-primary text-primary-foreground ring-2 ring-primary/30" : "bg-secondary text-secondary-foreground"
             }`}>
               {home.avatar}
             </div>
             <div>
-              <p className="font-display text-lg font-bold text-foreground">${home.currentValue.toLocaleString()}</p>
-              <p className="text-[10px] text-muted-foreground">{home.teamName}</p>
+              <p className="text-xs font-bold text-foreground truncate max-w-[100px]">{home.teamName}</p>
               <p className="text-[9px] text-muted-foreground">{home.record.wins}-{home.record.losses}</p>
             </div>
           </div>
-
-          {/* Away */}
-          <div className="flex items-center gap-2.5 flex-row-reverse">
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold ${
-              !homeWinning ? "bg-primary text-primary-foreground ring-2 ring-primary/40" : "bg-secondary text-secondary-foreground"
+          <span className="font-display text-[9px] font-bold text-muted-foreground uppercase tracking-wider">vs</span>
+          <div className="flex items-center gap-2 flex-row-reverse">
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold ${
+              !homeWinning ? "bg-primary text-primary-foreground ring-2 ring-primary/30" : "bg-secondary text-secondary-foreground"
             }`}>
               {away.avatar}
             </div>
             <div className="text-right">
-              <p className="font-display text-lg font-bold text-foreground">${away.currentValue.toLocaleString()}</p>
-              <p className="text-[10px] text-muted-foreground">{away.teamName}</p>
+              <p className="text-xs font-bold text-foreground truncate max-w-[100px]">{away.teamName}</p>
               <p className="text-[9px] text-muted-foreground">{away.record.wins}-{away.record.losses}</p>
             </div>
           </div>
         </div>
 
-        {/* Weekly growth score */}
-        <div className="flex items-center justify-between border-t border-border px-4 py-2.5 bg-secondary/30">
+        {/* Game Score Row */}
+        <div className="flex items-center justify-between border-t border-border px-3 py-2 bg-secondary/20">
           <div className="flex items-center gap-1.5">
-            {homeAdj >= 0 ? <TrendingUp className="h-3.5 w-3.5 text-gain" /> : <TrendingDown className="h-3.5 w-3.5 text-loss" />}
-            <span className={`font-display text-sm font-bold ${homeAdj >= 0 ? "text-gain" : "text-loss"}`}>
-              {homeAdj >= 0 ? "+" : ""}{homeAdj.toFixed(2)}%
+            {homeScore >= 0 ? <TrendingUp className="h-3 w-3 text-gain" /> : <TrendingDown className="h-3 w-3 text-loss" />}
+            <span className={`font-display text-sm font-bold ${homeScore >= 0 ? "text-gain" : "text-loss"}`}>
+              {homeScore >= 0 ? "+" : ""}{homeScore.toFixed(2)}%
             </span>
-            {home.gameModifiers.totalMultiplier !== 1 && (
-              <span className="text-[9px] text-muted-foreground">({home.gameModifiers.totalMultiplier.toFixed(2)}x)</span>
-            )}
+            <span className="text-[8px] text-muted-foreground">({homeDiv.modifier.toFixed(2)}x)</span>
           </div>
-          <span className="font-display text-[10px] font-bold text-muted-foreground">WEEKLY SCORE</span>
+          <span className="font-display text-[9px] font-bold text-muted-foreground tracking-wider">GAME SCORE</span>
           <div className="flex items-center gap-1.5 flex-row-reverse">
-            {awayAdj >= 0 ? <TrendingUp className="h-3.5 w-3.5 text-gain" /> : <TrendingDown className="h-3.5 w-3.5 text-loss" />}
-            <span className={`font-display text-sm font-bold ${awayAdj >= 0 ? "text-gain" : "text-loss"}`}>
-              {awayAdj >= 0 ? "+" : ""}{awayAdj.toFixed(2)}%
+            {awayScore >= 0 ? <TrendingUp className="h-3 w-3 text-gain" /> : <TrendingDown className="h-3 w-3 text-loss" />}
+            <span className={`font-display text-sm font-bold ${awayScore >= 0 ? "text-gain" : "text-loss"}`}>
+              {awayScore >= 0 ? "+" : ""}{awayScore.toFixed(2)}%
             </span>
-            {away.gameModifiers.totalMultiplier !== 1 && (
-              <span className="text-[9px] text-muted-foreground">({away.gameModifiers.totalMultiplier.toFixed(2)}x)</span>
-            )}
+            <span className="text-[8px] text-muted-foreground">({awayDiv.modifier.toFixed(2)}x)</span>
           </div>
         </div>
-      </div>
 
-      {/* Win Probability Meter */}
-      <div className="rounded-xl border border-border bg-card p-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Win Projection</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-bold ${homeWinning ? "text-primary" : "text-muted-foreground"}`}>{homeWinPct}%</span>
-          <div className="flex-1 h-3 rounded-full overflow-hidden bg-secondary flex">
-            <div
-              className="h-full rounded-l-full bg-primary transition-all duration-500"
-              style={{ width: `${homeWinPct}%` }}
-            />
-            <div
-              className="h-full rounded-r-full bg-loss/60 transition-all duration-500"
-              style={{ width: `${awayWinPct}%` }}
-            />
-          </div>
-          <span className={`text-xs font-bold ${!homeWinning ? "text-loss" : "text-muted-foreground"}`}>{awayWinPct}%</span>
-        </div>
-        <div className="flex items-center justify-between mt-1.5">
-          <p className="text-[9px] text-muted-foreground">{home.name}</p>
-          <p className="text-[9px] text-muted-foreground">{away.name}</p>
-        </div>
-      </div>
-
-      {/* Diversification modifiers comparison */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl border border-border bg-card p-2.5 flex items-center gap-2">
-          <Shield className="h-4 w-4 text-primary shrink-0" />
-          <div>
-            <p className="text-[9px] text-muted-foreground uppercase">Div. Modifier</p>
-            <p className={`font-display text-sm font-bold ${homeDiv.modifier < 1 ? "text-warning" : "text-gain"}`}>
-              {homeDiv.modifier.toFixed(2)}x
-            </p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-2.5 flex items-center gap-2 flex-row-reverse">
-          <Shield className="h-4 w-4 text-loss/60 shrink-0" />
-          <div className="text-right">
-            <p className="text-[9px] text-muted-foreground uppercase">Div. Modifier</p>
-            <p className={`font-display text-sm font-bold ${awayDiv.modifier < 1 ? "text-warning" : "text-gain"}`}>
-              {awayDiv.modifier.toFixed(2)}x
-            </p>
+        {/* Win Probability — inline */}
+        <div className="border-t border-border px-3 py-2">
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-bold w-7 text-right ${homeWinning ? "text-primary" : "text-muted-foreground"}`}>{homeWinPct}%</span>
+            <div className="flex-1 h-2 rounded-full overflow-hidden bg-secondary flex">
+              <div className="h-full rounded-l-full bg-primary transition-all duration-500" style={{ width: `${homeWinPct}%` }} />
+              <div className="h-full rounded-r-full bg-loss/60 transition-all duration-500" style={{ width: `${awayWinPct}%` }} />
+            </div>
+            <span className={`text-[10px] font-bold w-7 ${!homeWinning ? "text-loss" : "text-muted-foreground"}`}>{awayWinPct}%</span>
           </div>
         </div>
       </div>
@@ -226,8 +165,8 @@ const MatchupDetailView = () => {
       {/* Holdings by bucket */}
       {bucketRows.map(({ bucket, rows }) => (
         <div key={bucket} className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="border-b border-border bg-secondary/40 px-3 py-2">
-            <h3 className="font-display text-[11px] font-bold text-foreground uppercase tracking-wider">{bucket}</h3>
+          <div className="border-b border-border bg-secondary/40 px-3 py-1.5">
+            <h3 className="font-display text-[10px] font-bold text-foreground uppercase tracking-wider">{bucket}</h3>
           </div>
           <div className="divide-y divide-border/40">
             {rows.map((row, i) => (
