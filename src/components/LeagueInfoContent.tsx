@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLeagueData } from "@/hooks/useLeagueData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,8 +6,83 @@ import { useLeague } from "@/contexts/LeagueContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Standings from "@/components/Standings";
-import { Trophy, Crown, Users, Calendar, Shield, DollarSign, Copy, Check, Info, Trash2, Loader2 } from "lucide-react";
+import {
+  Trophy, Crown, Users, Calendar, Shield, DollarSign, Copy, Check, Info,
+  Trash2, Loader2, Pencil, X, ChevronRight,
+} from "lucide-react";
 import { TIER_ALLOCATIONS, TIER_LABELS, BUCKETS, deviationToModifier, type DiversificationTier } from "@/lib/diversificationModifier";
+
+/* ── Commissioner Editable Row ──────────────────────────── */
+const CommissionerRow = ({
+  icon: Icon, label, value, color, editable, onSave, type = "text", options,
+}: {
+  icon: React.ElementType; label: string; value: string; color: string;
+  editable: boolean; onSave?: (v: string) => Promise<void>; type?: string;
+  options?: { value: string; label: string }[];
+}) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => setDraft(value), [value]);
+
+  const save = async () => {
+    if (!onSave || draft === value) { setEditing(false); return; }
+    setSaving(true);
+    await onSave(draft);
+    setSaving(false);
+    setEditing(false);
+  };
+
+  if (editing && editable) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-3">
+        <Icon className={`h-4 w-4 ${color}`} />
+        <span className="text-sm text-foreground shrink-0">{label}</span>
+        <div className="flex-1" />
+        {options ? (
+          <select
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none"
+          >
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        ) : (
+          <input
+            autoFocus
+            type={type}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="w-20 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground text-right outline-none"
+          />
+        )}
+        <button onClick={save} disabled={saving} className="text-gain">
+          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+        </button>
+        <button onClick={() => { setDraft(value); setEditing(false); }} className="text-loss">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      className="flex w-full items-center gap-3 px-4 py-3 active:bg-accent"
+      onClick={() => editable && setEditing(true)}
+    >
+      <Icon className={`h-4 w-4 ${color}`} />
+      <span className="flex-1 text-left text-sm text-foreground">{label}</span>
+      <span className="text-xs text-muted-foreground capitalize">{value}</span>
+      {editable && <Pencil className="h-3 w-3 text-muted-foreground" />}
+      {!editable && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+    </button>
+  );
+};
 
 const LeagueInfoContent = () => {
   const { settings, members, loading } = useLeagueData();
@@ -49,6 +124,15 @@ const LeagueInfoContent = () => {
       setTerminating(false);
       setShowTerminateConfirm(false);
     }
+  };
+
+  const updateLeague = async (field: string, value: string | number | boolean) => {
+    if (!settings || !isCommissioner || !activeLeagueId) return;
+    const { error } = await supabase
+      .from("leagues")
+      .update({ [field]: value })
+      .eq("id", activeLeagueId);
+    if (error) console.error("League update error:", error);
   };
 
   if (loading || !settings) {
@@ -174,6 +258,54 @@ const LeagueInfoContent = () => {
 
       {/* Full Standings */}
       <Standings />
+
+      {/* Commissioner Settings — Editable for commissioner */}
+      {isCommissioner && (
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+            <Crown className="h-4 w-4 text-primary" />
+            <h3 className="font-display text-sm font-bold text-foreground">COMMISSIONER SETTINGS</h3>
+            <span className="ml-auto text-[10px] text-primary font-semibold">You're Commissioner</span>
+          </div>
+          <div className="divide-y divide-border/50">
+            <CommissionerRow
+              icon={DollarSign} label="Weekly Deposit" value={`$${settings.weeklyDeposit}`}
+              color="text-primary" editable
+              type="number"
+              onSave={async (v) => { await updateLeague("weekly_deposit", parseInt(v.replace("$", "")) || 50); }}
+            />
+            <CommissionerRow
+              icon={Calendar} label="Season Length" value={`${settings.seasonLength} weeks`}
+              color="text-bonus" editable
+              type="number"
+              onSave={async (v) => { await updateLeague("season_length", parseInt(v.replace(" weeks", "")) || 17); }}
+            />
+            <CommissionerRow
+              icon={Shield} label="Diversification Tier"
+              value={{ relaxed: "Cautious (50/50)", standard: "Moderate (65/35)", strict: "Aggressive (80/20)" }[settings.diversityStrictness] || settings.diversityStrictness}
+              color="text-gain" editable
+              options={[
+                { value: "relaxed", label: "Cautious (50/50)" },
+                { value: "standard", label: "Moderate (65/35)" },
+                { value: "strict", label: "Aggressive (80/20)" },
+              ]}
+              onSave={async (v) => { await updateLeague("diversity_strictness", v); }}
+            />
+            <CommissionerRow
+              icon={Users} label="Max Members" value={`${settings.maxMembers}`}
+              color="text-foreground" editable
+              type="number"
+              onSave={async (v) => { await updateLeague("max_members", parseInt(v) || 10); }}
+            />
+            <CommissionerRow
+              icon={Trophy} label="Playoff Teams" value={`${settings.playoffTeams}`}
+              color="text-primary" editable
+              type="number"
+              onSave={async (v) => { await updateLeague("playoff_teams", parseInt(v) || 4); }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Terminate League — Commissioner only */}
       {isCommissioner && (
