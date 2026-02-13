@@ -1,18 +1,60 @@
-import { useLeagueData } from "@/hooks/useLeagueData";
-import Standings from "@/components/Standings";
-import { Trophy, Crown, Users, Calendar, Shield, DollarSign, Settings as SettingsIcon, Copy, Check, Info } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLeagueData } from "@/hooks/useLeagueData";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLeague } from "@/contexts/LeagueContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import Standings from "@/components/Standings";
+import { Trophy, Crown, Users, Calendar, Shield, DollarSign, Copy, Check, Info, Trash2, Loader2 } from "lucide-react";
 import { TIER_ALLOCATIONS, TIER_LABELS, BUCKETS, deviationToModifier, type DiversificationTier } from "@/lib/diversificationModifier";
 
 const LeagueInfoContent = () => {
   const { settings, members, loading } = useLeagueData();
+  const { user } = useAuth();
+  const { refetch } = useLeague();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [showTerminateConfirm, setShowTerminateConfirm] = useState(false);
+  const [terminating, setTerminating] = useState(false);
+
+  const isCommissioner = settings && user && settings.commissionerId === user.id;
 
   const copyInvite = () => {
     if (settings?.inviteCode) {
       navigator.clipboard.writeText(settings.inviteCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleTerminateLeague = async () => {
+    if (!user || !isCommissioner) return;
+    setTerminating(true);
+    try {
+      const { data } = await supabase
+        .from("leagues")
+        .select("id")
+        .eq("commissioner_id", user.id)
+        .maybeSingle();
+      if (!data) throw new Error("League not found");
+
+      await supabase.from("league_members").delete().eq("league_id", data.id);
+      await supabase.from("matchups").delete().eq("league_id", data.id);
+      await supabase.from("holdings").delete().eq("league_id", data.id);
+      await supabase.from("activity_feed").delete().eq("league_id", data.id);
+      const { error } = await supabase.from("leagues").delete().eq("id", data.id);
+      if (error) throw error;
+
+      toast({ title: "League terminated", description: "The league has been permanently deleted." });
+      await refetch();
+      navigate("/league-hub");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setTerminating(false);
+      setShowTerminateConfirm(false);
     }
   };
 
@@ -139,6 +181,42 @@ const LeagueInfoContent = () => {
 
       {/* Full Standings */}
       <Standings />
+
+      {/* Terminate League — Commissioner only */}
+      {isCommissioner && (
+        <div className="rounded-xl border border-loss/30 bg-card overflow-hidden">
+          {!showTerminateConfirm ? (
+            <button
+              onClick={() => setShowTerminateConfirm(true)}
+              className="flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold text-loss active:bg-loss/10"
+            >
+              <Trash2 className="h-4 w-4" />
+              Terminate League
+            </button>
+          ) : (
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-loss font-semibold text-center">Are you sure? This is permanent.</p>
+              <p className="text-xs text-muted-foreground text-center">All members, matchups, holdings, and league data will be deleted.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowTerminateConfirm(false)}
+                  className="flex-1 rounded-lg border border-border py-2.5 text-sm font-semibold text-foreground active:bg-accent"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleTerminateLeague}
+                  disabled={terminating}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-loss py-2.5 text-sm font-semibold text-white active:bg-loss/80 disabled:opacity-50"
+                >
+                  {terminating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {terminating ? "Deleting…" : "Confirm Delete"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 };
