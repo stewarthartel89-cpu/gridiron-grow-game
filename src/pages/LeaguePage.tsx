@@ -55,25 +55,25 @@ const LeaguePage = () => {
             </button>
 
             {/* League name with dropdown switcher */}
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative min-w-0 flex-1 flex justify-center" ref={dropdownRef}>
               <button
                 onClick={() => leagues.length > 1 && setDropdownOpen((o) => !o)}
-                className="flex items-center gap-2.5 active:opacity-70 transition-opacity"
+                className="flex items-center gap-2 active:opacity-70 transition-opacity min-w-0 max-w-full"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary glow-primary">
-                  <Trophy className="h-5 w-5 text-primary-foreground" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary glow-primary">
+                  <Trophy className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <h1 className="font-display text-lg font-bold tracking-wider text-foreground">
+                <h1 className="font-display text-base font-bold tracking-wider text-foreground truncate">
                   {leagueName || "League"}
                 </h1>
                 {leagues.length > 1 && (
-                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
                 )}
               </button>
 
               {/* Dropdown menu */}
               {dropdownOpen && leagues.length > 1 && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden">
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden">
                   {leagues.map((l) => (
                     <button
                       key={l.leagueId}
@@ -83,7 +83,7 @@ const LeaguePage = () => {
                       }}
                       className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent active:bg-accent"
                     >
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary">
                         <Trophy className="h-3.5 w-3.5 text-primary" />
                       </div>
                       <span className="flex-1 font-semibold text-foreground truncate">{l.leagueName}</span>
