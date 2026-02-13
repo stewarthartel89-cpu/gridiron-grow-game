@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp, Plus, Users, Copy, Check } from "lucide-react";
+import { TrendingUp, Plus, Users, Copy, Check, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeague } from "@/contexts/LeagueContext";
@@ -8,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 
 const LeagueHubPage = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"create" | "join">("create");
   const { user } = useAuth();
   const { refetch } = useLeague();
@@ -169,7 +171,14 @@ const LeagueHubPage = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative">
+        {/* Back arrow */}
+        <button
+          onClick={() => navigate("/")}
+          className="absolute top-6 left-6 rounded-xl p-2 text-muted-foreground active:bg-accent"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         {/* Logo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
