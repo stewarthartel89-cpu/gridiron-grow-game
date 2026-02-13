@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from "react";
+import { useMemo, memo } from "react";
 import { leagueMembers, Sector } from "@/data/mockData";
 import LeagueHeader from "@/components/LeagueHeader";
 import PageTransition from "@/components/PageTransition";
@@ -21,9 +21,7 @@ const SECTOR_COLORS: Record<Sector, string> = {
 
 const LineupPage = () => {
   const me = leagueMembers[0];
-  const [activeTab, setActiveTab] = useState<"active" | "bench">("active");
-  const activeHoldings = me.holdings.filter(h => h.isActive);
-  const benchHoldings = me.holdings.filter(h => !h.isActive);
+  const allHoldings = me.holdings;
   const diversification = useMemo(() => calculateDiversification(me.holdings), [me.holdings]);
 
   return (
@@ -69,28 +67,15 @@ const LineupPage = () => {
           </div>
         </div>
 
-        {/* Active / Bench Tabs */}
+        {/* Holdings */}
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex border-b border-border">
-            <button
-              onClick={() => setActiveTab("active")}
-              className={`flex-1 py-2.5 text-center font-display text-xs font-bold transition-colors ${
-                activeTab === "active" ? "bg-primary/10 text-primary border-b-2 border-primary" : "text-muted-foreground"
-              }`}
-            >
-              ACTIVE LINEUP ({activeHoldings.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("bench")}
-              className={`flex-1 py-2.5 text-center font-display text-xs font-bold transition-colors ${
-                activeTab === "bench" ? "bg-primary/10 text-primary border-b-2 border-primary" : "text-muted-foreground"
-              }`}
-            >
-              BENCH ({benchHoldings.length})
-            </button>
+          <div className="border-b border-border px-4 py-2.5">
+            <p className="font-display text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              HOLDINGS ({allHoldings.length})
+            </p>
           </div>
           <div className="divide-y divide-border/50">
-            {(activeTab === "active" ? activeHoldings : benchHoldings).map(h => {
+            {allHoldings.map(h => {
               const gainPct = ((h.currentPrice - h.avgCost) / h.avgCost) * 100;
               const isUp = gainPct >= 0;
               return (

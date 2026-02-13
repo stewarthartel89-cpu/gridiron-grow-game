@@ -3,13 +3,13 @@ import { LeagueMember, Holding, weeklyMatchups, leagueMembers } from "@/data/moc
 import { classifyHolding, AssetBucket, BUCKETS, calculateDiversification } from "@/lib/diversificationModifier";
 import { TrendingUp, TrendingDown, Shield } from "lucide-react";
 
-/** Group active holdings by diversity bucket */
+/** Group holdings by diversity bucket */
 function groupByBucket(holdings: Holding[]): Record<AssetBucket, Holding[]> {
   const groups: Record<AssetBucket, Holding[]> = {
     Stocks: [],
     ETFs: [],
   };
-  for (const h of holdings.filter((h) => h.isActive)) {
+  for (const h of holdings) {
     groups[classifyHolding(h.sector)].push(h);
   }
   return groups;
