@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PageTransition from "@/components/PageTransition";
 import LeagueHeader from "@/components/LeagueHeader";
@@ -6,10 +6,9 @@ import WeeklyMatchups from "@/components/WeeklyMatchups";
 import MatchupDetailView from "@/components/MatchupDetailView";
 import { useLeagueData } from "@/hooks/useLeagueData";
 import { useLeague } from "@/contexts/LeagueContext";
-import { Settings as SettingsIcon, Binoculars, Swords, Trophy, Briefcase, MessageCircle } from "lucide-react";
+import { Settings as SettingsIcon, Binoculars, Swords, Trophy, Briefcase, MessageCircle, ChevronDown, Check } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useChat";
 
-// Import Scout page content inline
 import ScoutContent from "@/components/ScoutContent";
 import LeagueInfoContent from "@/components/LeagueInfoContent";
 import PortfolioContent from "@/components/PortfolioContent";
@@ -25,9 +24,22 @@ type TabKey = typeof TABS[number]["key"];
 
 const LeaguePage = () => {
   const [tab, setTab] = useState<TabKey>("portfolio");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { leagueName } = useLeague();
+  const { leagueName, leagues, activeLeagueId, setActiveLeague } = useLeague();
   const unreadCount = useUnreadCount();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [dropdownOpen]);
 
   return (
     <PageTransition>
@@ -41,14 +53,49 @@ const LeaguePage = () => {
             >
               <SettingsIcon className="h-5 w-5" />
             </button>
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary glow-primary">
-                <Trophy className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h1 className="font-display text-lg font-bold tracking-wider text-foreground">
-                {leagueName || "League"}
-              </h1>
+
+            {/* League name with dropdown switcher */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => leagues.length > 1 && setDropdownOpen((o) => !o)}
+                className="flex items-center gap-2.5 active:opacity-70 transition-opacity"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary glow-primary">
+                  <Trophy className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <h1 className="font-display text-lg font-bold tracking-wider text-foreground">
+                  {leagueName || "League"}
+                </h1>
+                {leagues.length > 1 && (
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+                )}
+              </button>
+
+              {/* Dropdown menu */}
+              {dropdownOpen && leagues.length > 1 && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden">
+                  {leagues.map((l) => (
+                    <button
+                      key={l.leagueId}
+                      onClick={() => {
+                        setActiveLeague(l.leagueId);
+                        setDropdownOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent active:bg-accent"
+                    >
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary">
+                        <Trophy className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <span className="flex-1 font-semibold text-foreground truncate">{l.leagueName}</span>
+                      {l.leagueId === activeLeagueId && (
+                        <Check className="h-4 w-4 text-primary shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
             <button
               onClick={() => navigate("/chat")}
               className="relative rounded-lg p-2 text-muted-foreground hover:text-foreground active:bg-accent transition-colors"
