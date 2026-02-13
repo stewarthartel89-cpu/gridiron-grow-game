@@ -19,7 +19,7 @@ const LeagueHubPage = () => {
   const [weeklyDeposit, setWeeklyDeposit] = useState("50");
   const [maxMembers, setMaxMembers] = useState("10");
   const [seasonLength, setSeasonLength] = useState("17");
-  const [diversityStrictness, setDiversityStrictness] = useState("moderate");
+  const [diversityStrictness, setDiversityStrictness] = useState("standard");
 
   // Join form
   const [inviteCode, setInviteCode] = useState("");
@@ -268,9 +268,9 @@ const LeagueHubPage = () => {
                     onChange={(e) => setDiversityStrictness(e.target.value)}
                     className={inputClass}
                   >
-                    <option value="cautious">Cautious (50/50)</option>
-                    <option value="moderate">Moderate (65/35)</option>
-                    <option value="aggressive">Aggressive (80/20)</option>
+                    <option value="relaxed">Cautious (50/50)</option>
+                    <option value="standard">Moderate (65/35)</option>
+                    <option value="strict">Aggressive (80/20)</option>
                   </select>
                 </div>
               </div>
