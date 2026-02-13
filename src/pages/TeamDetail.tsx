@@ -31,7 +31,7 @@ interface HoldingData {
   allocation: number;
   sector: string;
   weeks_held: number;
-  is_active: boolean;
+  // is_active is deprecated – all holdings are always in play
 }
 
 interface TeamData {
@@ -103,7 +103,7 @@ const HoldingsList = memo(({ holdings }: { holdings: HoldingData[] }) => {
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm font-semibold text-foreground">{h.symbol}</p>
                     <span className={`rounded px-1 py-0.5 text-[8px] font-bold ${SECTOR_COLORS[h.sector] || "bg-secondary"} text-white`}>{h.sector}</span>
-                    {!h.is_active && <span className="rounded px-1 py-0.5 text-[8px] font-bold bg-secondary text-muted-foreground">BENCH</span>}
+                    {/* All holdings are always in play */}
                   </div>
                   <p className="text-[11px] text-muted-foreground">{h.name}</p>
                 </div>
@@ -176,7 +176,7 @@ const TeamDetail = () => {
   const totalReturn = totalInvested > 0 ? ((currentValue - totalInvested) / totalInvested) * 100 : 0;
   const totalGain = currentValue - totalInvested;
 
-  const activeHoldings = useMemo(() => team?.holdings.filter(h => h.is_active) || [], [team]);
+  const activeHoldings = useMemo(() => team?.holdings || [], [team]);
   const diversification = useMemo(() => calculateDiversification(team?.holdings || []), [team]);
 
   if (loading) {

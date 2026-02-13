@@ -71,11 +71,11 @@ export function calculateDiversification(
   tier: DiversificationTier = "moderate"
 ): DiversificationResult {
   const target = TIER_ALLOCATIONS[tier];
-  const active = holdings.filter(h => h.isActive ?? h.is_active ?? true);
-  const totalAlloc = active.reduce((sum, h) => sum + h.allocation, 0);
+  // All holdings are always in play
+  const totalAlloc = holdings.reduce((sum, h) => sum + h.allocation, 0);
 
   const raw: Record<AssetBucket, number> = { Stocks: 0, ETFs: 0 };
-  for (const h of active) {
+  for (const h of holdings) {
     raw[classifyHolding(h.sector)] += h.allocation;
   }
 

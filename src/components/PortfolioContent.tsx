@@ -213,11 +213,6 @@ const PortfolioContent = () => {
                       <span className={`rounded px-1 py-0.5 text-[8px] font-bold ${SECTOR_COLORS[h.sector]} text-white`}>
                         {h.sector}
                       </span>
-                      {!h.isActive && (
-                        <span className="rounded px-1 py-0.5 text-[8px] font-bold bg-muted text-muted-foreground">
-                          BENCH
-                        </span>
-                      )}
                     </div>
                     <p className="text-[10px] text-muted-foreground">{h.name} · {h.shares} shares</p>
                   </div>
