@@ -114,28 +114,21 @@ serve(async (req) => {
 
     const { leagueId } = await req.json();
 
-    // Validate leagueId format
-    if (!leagueId || typeof leagueId !== "string") {
-      throw new Error("Invalid leagueId");
-    }
-
-    // For non-UUID "current" placeholder, we need a real league ID
-    if (leagueId !== "current" && !UUID_REGEX.test(leagueId)) {
+    // Validate leagueId format - always require valid UUID
+    if (!leagueId || typeof leagueId !== "string" || !UUID_REGEX.test(leagueId)) {
       throw new Error("Invalid leagueId format");
     }
 
-    // Verify user is a member of the league
-    if (leagueId !== "current") {
-      const { data: membership } = await supabase
-        .from("league_members")
-        .select("id")
-        .eq("league_id", leagueId)
-        .eq("user_id", user.id)
-        .single();
+    // Always verify user is a member of the league
+    const { data: membership } = await supabase
+      .from("league_members")
+      .select("id")
+      .eq("league_id", leagueId)
+      .eq("user_id", user.id)
+      .single();
 
-      if (!membership) {
-        throw new Error("Not a member of this league");
-      }
+    if (!membership) {
+      throw new Error("Not a member of this league");
     }
 
     // Get user's connected accounts
