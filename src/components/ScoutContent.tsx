@@ -22,19 +22,19 @@ const SYMBOL_REGION: Record<string, "US" | "International"> = {
   BNDX: "International", IAGG: "International", EMB: "International", VWOB: "International",
 };
 
-const SYMBOL_ASSET_TYPE: Record<string, "Stocks" | "Bonds"> = {
+const SYMBOL_ASSET_TYPE: Record<string, "Stocks" | "ETFs"> = {
   AAPL: "Stocks", NVDA: "Stocks", MSFT: "Stocks", GOOGL: "Stocks", META: "Stocks",
   AMZN: "Stocks", TSLA: "Stocks", COIN: "Stocks", SOFI: "Stocks", JPM: "Stocks",
   PFE: "Stocks", XOM: "Stocks",
-  VXUS: "Stocks", EFA: "Stocks", VEA: "Stocks", IEMG: "Stocks", EEM: "Stocks",
-  BND: "Bonds", AGG: "Bonds", TLT: "Bonds", SHY: "Bonds", IEF: "Bonds", VCIT: "Bonds", LQD: "Bonds",
-  BNDX: "Bonds", IAGG: "Bonds", EMB: "Bonds", VWOB: "Bonds",
+  VXUS: "ETFs", EFA: "ETFs", VEA: "ETFs", IEMG: "ETFs", EEM: "ETFs",
+  BND: "ETFs", AGG: "ETFs", TLT: "ETFs", SHY: "ETFs", IEF: "ETFs", VCIT: "ETFs", LQD: "ETFs",
+  BNDX: "ETFs", IAGG: "ETFs", EMB: "ETFs", VWOB: "ETFs",
 };
 
 const WATCHED_SYMBOLS = Object.keys(STOCK_SECTORS);
 const SECTORS = ["All Sectors", "Technology", "Consumer", "Financials", "Energy", "Healthcare", "Crypto", "International", "Bonds", "Intl Bonds"];
 const REGION_OPTIONS = [{ value: "All", label: "All Regions" }, { value: "US", label: "US" }, { value: "International", label: "International" }];
-const ASSET_TYPE_OPTIONS = [{ value: "All", label: "Stocks & Bonds" }, { value: "Stocks", label: "Stocks" }, { value: "Bonds", label: "Bonds" }];
+const ASSET_TYPE_OPTIONS = [{ value: "All", label: "Stocks & ETFs" }, { value: "Stocks", label: "Stocks" }, { value: "ETFs", label: "ETFs" }];
 
 type SortOption = "weekly-growth" | "top-gainers" | "top-losers" | "price-high" | "price-low";
 const sortOptions: { value: SortOption; label: string }[] = [
