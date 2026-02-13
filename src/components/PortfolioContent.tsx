@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { leagueMembers, Sector } from "@/data/mockData";
-import { Target, ArrowRightLeft } from "lucide-react";
-import { calculateDiversification } from "@/lib/diversificationModifier";
-import DiversificationModifier from "@/components/DiversificationModifier";
+import { ArrowRightLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 const SECTOR_COLORS: Record<Sector, string> = {
   "Tech": "bg-[hsl(200,70%,50%)]",
@@ -17,75 +16,184 @@ const SECTOR_COLORS: Record<Sector, string> = {
   "Industrials": "bg-[hsl(0,0%,55%)]",
 };
 
+type TimeFilter = "1D" | "1W" | "1M" | "1Y";
+
 const PortfolioContent = () => {
   const me = leagueMembers[0];
-  const [activeTab, setActiveTab] = useState<"active" | "bench">("active");
-  const activeHoldings = me.holdings.filter(h => h.isActive);
-  const benchHoldings = me.holdings.filter(h => !h.isActive);
-  const diversification = useMemo(() => calculateDiversification(me.holdings), [me.holdings]);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("1W");
+
+  const totalBalance = me.currentValue;
+  const totalInvested = me.totalInvested;
+
+  // Simulate growth data per filter
+  const { growthPct, chartData } = useMemo(() => {
+    const history = me.weeklyHistory;
+    let pct: number;
+    let data: { label: string; value: number }[];
+
+    switch (timeFilter) {
+      case "1D": {
+        // Simulate intraday from last weekly point
+        const last = history[history.length - 1];
+        const intraDaySteps = ["9:30", "10", "11", "12", "1", "2", "3", "4"];
+        let cumulative = 0;
+        data = intraDaySteps.map((label, i) => {
+          cumulative += (last / intraDaySteps.length) * (0.6 + Math.sin(i) * 0.4);
+          return { label, value: +(totalBalance - (last / 100) * totalBalance + cumulative * (totalBalance / 100)).toFixed(0) };
+        });
+        pct = last * 0.3; // partial day
+        break;
+      }
+      case "1W": {
+        pct = history[history.length - 1];
+        const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+        const weekPct = pct;
+        data = days.map((label, i) => ({
+          label,
+          value: +(totalBalance - (weekPct / 100) * totalBalance * (1 - i / (days.length - 1))).toFixed(0),
+        }));
+        break;
+      }
+      case "1M": {
+        pct = history.slice(-4).reduce((a, b) => a + b, 0);
+        let running = totalBalance - (pct / 100) * totalBalance;
+        data = ["W1", "W2", "W3", "W4"].map((label, i) => {
+          running += (history[history.length - 4 + i] / 100) * totalBalance;
+          return { label, value: +running.toFixed(0) };
+        });
+        break;
+      }
+      case "1Y": {
+        pct = ((totalBalance - totalInvested) / totalInvested) * 100;
+        let running2 = totalInvested;
+        data = history.map((w, i) => {
+          running2 += (w / 100) * running2;
+          return { label: `W${i + 1}`, value: +running2.toFixed(0) };
+        });
+        break;
+      }
+    }
+
+    return { growthPct: pct, chartData: data };
+  }, [timeFilter, me, totalBalance, totalInvested]);
+
+  const isUp = growthPct >= 0;
+  const dollarChange = (growthPct / 100) * totalBalance;
+
+  const allHoldings = me.holdings;
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Target className="h-5 w-5 text-primary" />
-          Portfolio
+      {/* Balance + Growth */}
+      <div className="text-center space-y-1">
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Portfolio Balance</p>
+        <h2 className="font-display text-3xl font-bold text-foreground tracking-tight">
+          ${totalBalance.toLocaleString()}
         </h2>
-      </div>
-
-      <DiversificationModifier result={diversification} />
-
-      <div className="grid grid-cols-3 gap-2.5">
-        <div className="rounded-xl border border-border bg-card p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Modifier</p>
-          <p className={`mt-1 font-display text-lg font-bold ${diversification.modifier < 1 ? "text-warning" : "text-gain"}`}>
-            {diversification.modifier.toFixed(2)}x
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Worst Bucket</p>
-          <p className="mt-1 font-display text-lg font-bold text-foreground truncate">{diversification.worstDeviation.toFixed(0)}%</p>
-          <p className="text-[9px] text-muted-foreground mt-0.5">{diversification.worstBucket}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Multi</p>
-          <p className={`mt-1 font-display text-lg font-bold ${me.gameModifiers.totalMultiplier >= 1 ? "text-gain" : "text-loss"}`}>
-            {me.gameModifiers.totalMultiplier.toFixed(2)}x
-          </p>
+        <div className="flex items-center justify-center gap-1.5">
+          {isUp ? <TrendingUp className="h-4 w-4 text-gain" /> : <TrendingDown className="h-4 w-4 text-loss" />}
+          <span className={`text-sm font-semibold ${isUp ? "text-gain" : "text-loss"}`}>
+            {isUp ? "+" : ""}{dollarChange.toFixed(2)} ({isUp ? "+" : ""}{growthPct.toFixed(2)}%)
+          </span>
         </div>
       </div>
 
+      {/* Time filter */}
+      <div className="flex justify-center gap-1">
+        {(["1D", "1W", "1M", "1Y"] as TimeFilter[]).map(f => (
+          <button
+            key={f}
+            onClick={() => setTimeFilter(f)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
+              timeFilter === f
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {/* Chart */}
+      <div className="rounded-xl border border-border bg-card p-3 -mx-1">
+        <div className="h-40">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
+              <defs>
+                <linearGradient id="portfolioGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={isUp ? "hsl(142,70%,45%)" : "hsl(0,70%,50%)"} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={isUp ? "hsl(142,70%,45%)" : "hsl(0,70%,50%)"} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              />
+              <YAxis hide domain={["dataMin - 20", "dataMax + 20"]} />
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+                formatter={(value: number) => [`$${value.toLocaleString()}`, "Value"]}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke={isUp ? "hsl(142,70%,45%)" : "hsl(0,70%,50%)"}
+                strokeWidth={2}
+                fill="url(#portfolioGrad)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Holdings list */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="flex border-b border-border">
-          <button onClick={() => setActiveTab("active")}
-            className={`flex-1 py-2.5 text-center font-display text-xs font-bold transition-colors ${activeTab === "active" ? "bg-primary/10 text-primary border-b-2 border-primary" : "text-muted-foreground"}`}>
-            ACTIVE ({activeHoldings.length})
-          </button>
-          <button onClick={() => setActiveTab("bench")}
-            className={`flex-1 py-2.5 text-center font-display text-xs font-bold transition-colors ${activeTab === "bench" ? "bg-primary/10 text-primary border-b-2 border-primary" : "text-muted-foreground"}`}>
-            BENCH ({benchHoldings.length})
-          </button>
+        <div className="px-4 py-3 border-b border-border">
+          <p className="font-display text-xs font-bold text-muted-foreground uppercase tracking-wider">
+            Holdings ({allHoldings.length})
+          </p>
         </div>
         <div className="divide-y divide-border/50">
-          {(activeTab === "active" ? activeHoldings : benchHoldings).map(h => {
+          {allHoldings.map(h => {
             const gainPct = ((h.currentPrice - h.avgCost) / h.avgCost) * 100;
-            const isUp = gainPct >= 0;
+            const holdingUp = gainPct >= 0;
             return (
               <div key={h.symbol} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary font-display text-[10px] font-bold text-secondary-foreground">{h.symbol}</div>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary font-display text-[10px] font-bold text-secondary-foreground">
+                    {h.symbol}
+                  </div>
                   <div>
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-semibold text-foreground">{h.symbol}</p>
-                      <span className={`rounded px-1 py-0.5 text-[8px] font-bold ${SECTOR_COLORS[h.sector]} text-white`}>{h.sector}</span>
+                      <span className={`rounded px-1 py-0.5 text-[8px] font-bold ${SECTOR_COLORS[h.sector]} text-white`}>
+                        {h.sector}
+                      </span>
+                      {!h.isActive && (
+                        <span className="rounded px-1 py-0.5 text-[8px] font-bold bg-muted text-muted-foreground">
+                          BENCH
+                        </span>
+                      )}
                     </div>
-                    <p className="text-[10px] text-muted-foreground">{h.name} · {h.weeksHeld}w held</p>
+                    <p className="text-[10px] text-muted-foreground">{h.name} · {h.shares} shares</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-foreground">${(h.currentPrice * h.shares).toFixed(0)}</p>
-                    <p className={`text-[11px] font-medium ${isUp ? "text-gain" : "text-loss"}`}>{isUp ? "+" : ""}{gainPct.toFixed(1)}%</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      ${(h.currentPrice * h.shares).toFixed(0)}
+                    </p>
+                    <p className={`text-[11px] font-medium ${holdingUp ? "text-gain" : "text-loss"}`}>
+                      {holdingUp ? "+" : ""}{gainPct.toFixed(1)}%
+                    </p>
                   </div>
                   <button className="rounded-lg p-1.5 text-muted-foreground active:bg-accent">
                     <ArrowRightLeft className="h-3.5 w-3.5" />
