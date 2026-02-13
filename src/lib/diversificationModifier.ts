@@ -1,35 +1,50 @@
 /**
  * Diversification Modifier System
  *
- * Compares a user's portfolio allocation against the ideal target allocation
- * and applies a negative-only multiplier to weekly matchup scores.
+ * Compares a user's portfolio Stock vs ETF allocation against a tier-based target.
+ * Applies a negative-only multiplier to weekly matchup scores.
  *
- * Target: 45% US Stocks, 25% Intl Stocks, 20% US Bonds, 10% Intl Bonds
+ * Tiers:
+ *   Cautious:    50% Stocks / 50% ETFs
+ *   Moderate:    65% Stocks / 35% ETFs
+ *   Aggressive:  80% Stocks / 20% ETFs
  */
 
-export type AssetBucket = "US Stocks" | "Intl Stocks" | "US Bonds" | "Intl Bonds";
+export type AssetBucket = "Stocks" | "ETFs";
 
-export const TARGET_ALLOCATION: Record<AssetBucket, number> = {
-  "US Stocks": 45,
-  "Intl Stocks": 25,
-  "US Bonds": 20,
-  "Intl Bonds": 10,
+export type DiversificationTier = "cautious" | "moderate" | "aggressive";
+
+export const TIER_LABELS: Record<DiversificationTier, string> = {
+  cautious: "Cautious",
+  moderate: "Moderate",
+  aggressive: "Aggressive",
 };
 
-export const BUCKETS: AssetBucket[] = ["US Stocks", "Intl Stocks", "US Bonds", "Intl Bonds"];
+export const TIER_ALLOCATIONS: Record<DiversificationTier, Record<AssetBucket, number>> = {
+  cautious: { Stocks: 50, ETFs: 50 },
+  moderate: { Stocks: 65, ETFs: 35 },
+  aggressive: { Stocks: 80, ETFs: 20 },
+};
+
+export const BUCKETS: AssetBucket[] = ["Stocks", "ETFs"];
 
 /**
- * Maps a sector string to one of the 4 asset buckets.
- * Holdings with bond-related sectors map to bond buckets;
- * "International" maps to Intl Stocks; everything else is US Stocks.
+ * Maps a sector string to Stocks or ETFs.
+ * Holdings with ETF/Index-related sectors map to ETFs; everything else is Stocks.
  */
 export function classifyHolding(sector: string): AssetBucket {
   const s = sector.toLowerCase();
-  if (s === "international" || s === "intl stock" || s === "intl_stock") return "Intl Stocks";
-  if (s === "intl bond" || s === "intl_bond" || s === "international bonds") return "Intl Bonds";
-  if (s === "us bond" || s === "us_bond" || s === "bonds" || s === "bond") return "US Bonds";
-  // Everything else (Tech, Healthcare, Energy, Financials, Consumer, Index/ETF, Real Estate, Crypto, Industrials)
-  return "US Stocks";
+  if (
+    s === "etf" ||
+    s === "index" ||
+    s === "index/etf" ||
+    s === "index_etf" ||
+    s.includes("etf") ||
+    s.includes("index fund")
+  ) {
+    return "ETFs";
+  }
+  return "Stocks";
 }
 
 export interface BucketAllocation {
@@ -40,6 +55,7 @@ export interface BucketAllocation {
 }
 
 export interface DiversificationResult {
+  tier: DiversificationTier;
   allocations: BucketAllocation[];
   worstDeviation: number;
   worstBucket: AssetBucket;
@@ -47,35 +63,40 @@ export interface DiversificationResult {
 }
 
 /**
- * Calculates the current allocation across the 4 buckets
- * from a list of holdings with { sector, allocation, is_active/isActive } fields.
+ * Calculates the current allocation across Stock/ETF buckets
+ * and compares against the given tier target.
  */
 export function calculateDiversification(
-  holdings: { sector: string; allocation: number; isActive?: boolean; is_active?: boolean }[]
+  holdings: { sector: string; allocation: number; isActive?: boolean; is_active?: boolean }[],
+  tier: DiversificationTier = "moderate"
 ): DiversificationResult {
+  const target = TIER_ALLOCATIONS[tier];
   const active = holdings.filter(h => h.isActive ?? h.is_active ?? true);
   const totalAlloc = active.reduce((sum, h) => sum + h.allocation, 0);
 
-  // Compute raw bucket totals
-  const raw: Record<AssetBucket, number> = { "US Stocks": 0, "Intl Stocks": 0, "US Bonds": 0, "Intl Bonds": 0 };
+  const raw: Record<AssetBucket, number> = { Stocks: 0, ETFs: 0 };
   for (const h of active) {
     raw[classifyHolding(h.sector)] += h.allocation;
   }
 
-  // Normalise to percentages
   const allocations: BucketAllocation[] = BUCKETS.map(bucket => {
     const actual = totalAlloc > 0 ? (raw[bucket] / totalAlloc) * 100 : 0;
-    const target = TARGET_ALLOCATION[bucket];
-    return { bucket, actual: Math.round(actual * 10) / 10, target, deviation: Math.round(Math.abs(actual - target) * 10) / 10 };
+    const t = target[bucket];
+    return {
+      bucket,
+      actual: Math.round(actual * 10) / 10,
+      target: t,
+      deviation: Math.round(Math.abs(actual - t) * 10) / 10,
+    };
   });
 
-  // Worst bucket
   let worst = allocations[0];
   for (const a of allocations) {
     if (a.deviation > worst.deviation) worst = a;
   }
 
   return {
+    tier,
     allocations,
     worstDeviation: worst.deviation,
     worstBucket: worst.bucket,

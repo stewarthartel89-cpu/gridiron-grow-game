@@ -411,12 +411,12 @@ const SettingsPage = () => {
                   onSave={async (v) => { await updateLeague("season_length", parseInt(v.replace(" weeks", "")) || 17); }}
                 />
                 <CommissionerRow
-                  icon={Shield} label="Diversity Strictness" value={settings.diversityStrictness}
+                  icon={Shield} label="Diversification Tier" value={settings.diversityStrictness}
                   color="text-gain" editable={!!isCommissioner}
                   options={[
-                    { value: "relaxed", label: "Relaxed" },
-                    { value: "standard", label: "Standard" },
-                    { value: "strict", label: "Strict" },
+                    { value: "cautious", label: "Cautious (50/50)" },
+                    { value: "moderate", label: "Moderate (65/35)" },
+                    { value: "aggressive", label: "Aggressive (80/20)" },
                   ]}
                   onSave={async (v) => { await updateLeague("diversity_strictness", v); }}
                 />

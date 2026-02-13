@@ -19,7 +19,7 @@ const LeagueHubPage = () => {
   const [weeklyDeposit, setWeeklyDeposit] = useState("50");
   const [maxMembers, setMaxMembers] = useState("10");
   const [seasonLength, setSeasonLength] = useState("17");
-  const [diversityStrictness, setDiversityStrictness] = useState("standard");
+  const [diversityStrictness, setDiversityStrictness] = useState("moderate");
 
   // Join form
   const [inviteCode, setInviteCode] = useState("");
@@ -262,15 +262,15 @@ const LeagueHubPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground mb-1 block">Diversity Rules</label>
+                  <label className="text-[10px] text-muted-foreground mb-1 block">Diversification Tier</label>
                   <select
                     value={diversityStrictness}
                     onChange={(e) => setDiversityStrictness(e.target.value)}
                     className={inputClass}
                   >
-                    <option value="relaxed">Relaxed</option>
-                    <option value="standard">Standard</option>
-                    <option value="strict">Strict</option>
+                    <option value="cautious">Cautious (50/50)</option>
+                    <option value="moderate">Moderate (65/35)</option>
+                    <option value="aggressive">Aggressive (80/20)</option>
                   </select>
                 </div>
               </div>

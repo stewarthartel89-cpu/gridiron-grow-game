@@ -4,13 +4,12 @@ import {
   type DiversificationResult,
   type BucketAllocation,
   BUCKETS,
+  TIER_LABELS,
 } from "@/lib/diversificationModifier";
 
 const BUCKET_COLORS: Record<string, string> = {
-  "US Stocks": "bg-[hsl(200,70%,50%)]",
-  "Intl Stocks": "bg-[hsl(170,60%,45%)]",
-  "US Bonds": "bg-[hsl(35,90%,55%)]",
-  "Intl Bonds": "bg-[hsl(280,60%,55%)]",
+  Stocks: "bg-[hsl(200,70%,50%)]",
+  ETFs: "bg-[hsl(35,90%,55%)]",
 };
 
 const modifierColor = (m: number) =>
@@ -24,7 +23,7 @@ interface Props {
 }
 
 const DiversificationModifier = memo(({ result, compact = false }: Props) => {
-  const { allocations, worstDeviation, worstBucket, modifier } = result;
+  const { allocations, worstDeviation, worstBucket, modifier, tier } = result;
   const color = modifierColor(modifier);
   const bg = modifierBg(modifier);
   const label =
@@ -40,6 +39,12 @@ const DiversificationModifier = memo(({ result, compact = false }: Props) => {
             <h3 className="font-display text-sm font-bold text-foreground">DIVERSIFICATION MODIFIER</h3>
           </div>
           <span className={`text-[10px] font-bold ${color}`}>{label}</span>
+        </div>
+
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] text-muted-foreground rounded-full border border-border px-2 py-0.5">
+            {TIER_LABELS[tier]} Tier
+          </span>
         </div>
 
         <div className="flex items-end gap-3 mb-2">
@@ -96,7 +101,6 @@ DiversificationModifier.displayName = "DiversificationModifier";
 
 const AllocationRow = memo(({ data, isWorst }: { data: BucketAllocation; isWorst: boolean }) => {
   const { bucket, actual, target, deviation } = data;
-  const isOver = actual > target;
 
   return (
     <div>
@@ -119,7 +123,6 @@ const AllocationRow = memo(({ data, isWorst }: { data: BucketAllocation; isWorst
           className={`h-full rounded-full ${isWorst ? "bg-warning" : BUCKET_COLORS[bucket]}`}
           style={{ width: `${Math.min(actual, 100)}%` }}
         />
-        {/* Target marker */}
         <div
           className="absolute top-0 h-full w-px bg-foreground/40"
           style={{ left: `${target}%` }}

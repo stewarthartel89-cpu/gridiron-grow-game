@@ -6,10 +6,8 @@ import { TrendingUp, TrendingDown, Shield } from "lucide-react";
 /** Group active holdings by diversity bucket */
 function groupByBucket(holdings: Holding[]): Record<AssetBucket, Holding[]> {
   const groups: Record<AssetBucket, Holding[]> = {
-    "US Stocks": [],
-    "Intl Stocks": [],
-    "US Bonds": [],
-    "Intl Bonds": [],
+    Stocks: [],
+    ETFs: [],
   };
   for (const h of holdings.filter((h) => h.isActive)) {
     groups[classifyHolding(h.sector)].push(h);
@@ -63,7 +61,7 @@ const HoldingRow = ({
       {/* Center badge */}
       <div className="shrink-0 w-10 flex justify-center">
         <span className="text-[8px] font-bold text-muted-foreground bg-secondary rounded px-1 py-0.5">
-          {bucket === "US Stocks" ? "US" : bucket === "Intl Stocks" ? "INTL" : bucket === "US Bonds" ? "BND" : "IB"}
+          {bucket === "Stocks" ? "STK" : "ETF"}
         </span>
       </div>
 
@@ -95,10 +93,10 @@ const MatchupDetailView = () => {
   const home = matchup?.home;
   const away = matchup?.away;
 
-  const homeGroups = useMemo(() => home ? groupByBucket(home.holdings) : { "US Stocks": [], "Intl Stocks": [], "US Bonds": [], "Intl Bonds": [] }, [home]);
-  const awayGroups = useMemo(() => away ? groupByBucket(away.holdings) : { "US Stocks": [], "Intl Stocks": [], "US Bonds": [], "Intl Bonds": [] }, [away]);
-  const homeDiv = useMemo(() => home ? calculateDiversification(home.holdings) : { allocations: [], worstDeviation: 0, worstBucket: "US Stocks" as AssetBucket, modifier: 1 }, [home]);
-  const awayDiv = useMemo(() => away ? calculateDiversification(away.holdings) : { allocations: [], worstDeviation: 0, worstBucket: "US Stocks" as AssetBucket, modifier: 1 }, [away]);
+  const homeGroups = useMemo(() => home ? groupByBucket(home.holdings) : { Stocks: [], ETFs: [] }, [home]);
+  const awayGroups = useMemo(() => away ? groupByBucket(away.holdings) : { Stocks: [], ETFs: [] }, [away]);
+  const homeDiv = useMemo(() => home ? calculateDiversification(home.holdings) : { tier: "moderate" as const, allocations: [], worstDeviation: 0, worstBucket: "Stocks" as AssetBucket, modifier: 1 }, [home]);
+  const awayDiv = useMemo(() => away ? calculateDiversification(away.holdings) : { tier: "moderate" as const, allocations: [], worstDeviation: 0, worstBucket: "Stocks" as AssetBucket, modifier: 1 }, [away]);
 
   if (!matchup || !home || !away) return <p className="text-sm text-muted-foreground text-center py-8">No matchup this week.</p>;
 

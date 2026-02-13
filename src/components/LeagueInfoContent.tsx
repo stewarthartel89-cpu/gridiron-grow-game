@@ -2,7 +2,7 @@ import { useLeagueData } from "@/hooks/useLeagueData";
 import Standings from "@/components/Standings";
 import { Trophy, Crown, Users, Calendar, Shield, DollarSign, Settings as SettingsIcon, Copy, Check, Info } from "lucide-react";
 import { useState } from "react";
-import { TARGET_ALLOCATION, BUCKETS, deviationToModifier } from "@/lib/diversificationModifier";
+import { TIER_ALLOCATIONS, TIER_LABELS, BUCKETS, deviationToModifier, type DiversificationTier } from "@/lib/diversificationModifier";
 
 const LeagueInfoContent = () => {
   const { settings, members, loading } = useLeagueData();
@@ -22,6 +22,18 @@ const LeagueInfoContent = () => {
 
   const playoffBound = members.slice(0, settings.playoffTeams);
   const weeksAway = Math.max(0, settings.playoffStartWeek - settings.currentWeek);
+
+  // Map diversity_strictness to tier (backward compat)
+  const tierMap: Record<string, DiversificationTier> = {
+    cautious: "cautious",
+    moderate: "moderate",
+    aggressive: "aggressive",
+    relaxed: "cautious",
+    standard: "moderate",
+    strict: "aggressive",
+  };
+  const tier: DiversificationTier = tierMap[settings.diversityStrictness] || "moderate";
+  const targetAlloc = TIER_ALLOCATIONS[tier];
 
   return (
     <>
@@ -81,13 +93,16 @@ const LeagueInfoContent = () => {
         <div className="flex items-center gap-2 mb-3">
           <Shield className="h-4 w-4 text-bonus" />
           <h3 className="font-display text-sm font-bold text-foreground">DIVERSIFICATION MODIFIER</h3>
+          <span className="ml-auto text-[10px] text-muted-foreground rounded-full border border-border px-2 py-0.5">
+            {TIER_LABELS[tier]} Tier
+          </span>
         </div>
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Target Allocation</p>
         <div className="space-y-1.5 mb-4">
           {BUCKETS.map((bucket) => (
             <div key={bucket} className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">{bucket}</span>
-              <span className="text-xs font-semibold text-foreground">{TARGET_ALLOCATION[bucket]}%</span>
+              <span className="text-xs font-semibold text-foreground">{targetAlloc[bucket]}%</span>
             </div>
           ))}
         </div>
@@ -95,7 +110,7 @@ const LeagueInfoContent = () => {
           <div className="flex items-start gap-2">
             <Info className="h-3.5 w-3.5 shrink-0 text-muted-foreground mt-0.5" />
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              The modifier compares your portfolio to the ideal allocation. The <strong>worst bucket deviation</strong> determines your multiplier.
+              The modifier compares your portfolio's Stock vs ETF split to the <strong>{TIER_LABELS[tier]}</strong> target. The <strong>worst bucket deviation</strong> determines your multiplier.
             </p>
           </div>
         </div>
