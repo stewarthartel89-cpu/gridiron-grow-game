@@ -12,7 +12,7 @@ import { TIER_ALLOCATIONS, TIER_LABELS, BUCKETS, deviationToModifier, type Diver
 const LeagueInfoContent = () => {
   const { settings, members, loading } = useLeagueData();
   const { user } = useAuth();
-  const { refetch } = useLeague();
+  const { refetch, leagueId: activeLeagueId } = useLeague();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -30,21 +30,14 @@ const LeagueInfoContent = () => {
   };
 
   const handleTerminateLeague = async () => {
-    if (!user || !isCommissioner) return;
+    if (!user || !isCommissioner || !activeLeagueId) return;
     setTerminating(true);
     try {
-      const { data } = await supabase
-        .from("leagues")
-        .select("id")
-        .eq("commissioner_id", user.id)
-        .maybeSingle();
-      if (!data) throw new Error("League not found");
-
-      await supabase.from("league_members").delete().eq("league_id", data.id);
-      await supabase.from("matchups").delete().eq("league_id", data.id);
-      await supabase.from("holdings").delete().eq("league_id", data.id);
-      await supabase.from("activity_feed").delete().eq("league_id", data.id);
-      const { error } = await supabase.from("leagues").delete().eq("id", data.id);
+      await supabase.from("league_members").delete().eq("league_id", activeLeagueId);
+      await supabase.from("matchups").delete().eq("league_id", activeLeagueId);
+      await supabase.from("holdings").delete().eq("league_id", activeLeagueId);
+      await supabase.from("activity_feed").delete().eq("league_id", activeLeagueId);
+      const { error } = await supabase.from("leagues").delete().eq("id", activeLeagueId);
       if (error) throw error;
 
       toast({ title: "League terminated", description: "The league has been permanently deleted." });
