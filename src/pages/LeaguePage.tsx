@@ -15,10 +15,10 @@ import LeagueInfoContent from "@/components/LeagueInfoContent";
 import PortfolioContent from "@/components/PortfolioContent";
 
 const TAB_ACCENTS: Record<string, string> = {
-  portfolio: "152 100% 45%",  // green
+  portfolio: "210 80% 55%",   // blue
   matchup: "15 90% 55%",     // orange-red
-  scout: "210 80% 55%",      // blue
-  league: "45 90% 55%",      // yellow
+  scout: "45 90% 55%",       // amber
+  league: "152 100% 45%",    // green (primary)
 };
 
 const TABS = [
@@ -52,8 +52,8 @@ const LeaguePage = () => {
   return (
     <PageTransition>
       <div
-        className="min-h-[100dvh] pb-28 transition-colors duration-500"
-        style={{ "--tab-accent": TAB_ACCENTS[tab], backgroundColor: `hsl(${TAB_ACCENTS[tab]} / 0.15)` } as React.CSSProperties}
+        className="min-h-[100dvh] bg-background pb-28"
+        style={{ "--tab-accent": TAB_ACCENTS[tab] } as React.CSSProperties}
       >
         {/* Header */}
         <header className="border-b border-border bg-card safe-area-top">
