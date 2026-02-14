@@ -17,6 +17,7 @@ import LeagueHubPage from "./pages/LeagueHubPage";
 import ContactPage from "./pages/ContactPage";
 import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
+import ColorPreview from "./pages/ColorPreview";
 import BottomNav from "./components/BottomNav";
 import Onboarding from "./components/Onboarding";
 import MessageNotificationListener from "./components/MessageNotificationListener";
@@ -80,6 +81,7 @@ const AnimatedRoutes = () => {
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/color-preview" element={<ColorPreview />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
