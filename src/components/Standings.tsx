@@ -1,49 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { MessageCircle, Trophy } from "lucide-react";
-import { useLeagueData } from "@/hooks/useLeagueData";
+import { leagueMembers, leagueSettings } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLeague } from "@/contexts/LeagueContext";
-import { findOrCreateDM } from "@/hooks/useChat";
 
 const Standings = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { leagueId } = useLeague();
-  const { members, settings, loading } = useLeagueData();
 
-  const playoffTeams = settings?.playoffTeams ?? 4;
-  const playoffStartWeek = settings?.playoffStartWeek ?? 14;
-  const currentWeek = settings?.currentWeek ?? 1;
+  const playoffTeams = leagueSettings.playoffTeams;
+  const playoffStartWeek = leagueSettings.playoffStartWeek;
+  const currentWeek = leagueSettings.currentWeek;
   const weeksAway = Math.max(0, playoffStartWeek - currentWeek);
 
-  const handleDM = async (e: React.MouseEvent, targetUserId: string) => {
-    e.stopPropagation();
-    if (!user || !leagueId) return;
-    const conversationId = await findOrCreateDM(user.id, targetUserId, leagueId);
-    if (conversationId) {
-      navigate(`/chat?dm=${conversationId}`);
-    }
-  };
-
-  if (loading) {
-    return (
-      <section>
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-14 animate-pulse rounded-xl bg-secondary" />
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (members.length === 0) {
-    return (
-      <div className="rounded-xl border border-border bg-card p-6 text-center">
-        <p className="text-sm text-muted-foreground">No members yet. Share your invite code to get started!</p>
-      </div>
-    );
-  }
+  // Sort by wins desc, losses asc
+  const members = [...leagueMembers].sort(
+    (a, b) => b.record.wins - a.record.wins || a.record.losses - b.record.losses
+  );
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -79,7 +51,7 @@ const Standings = () => {
                 }`}
               >
                 <button
-                  onClick={() => navigate(`/team/${member.userId}`)}
+                  onClick={() => navigate(`/team/${member.id}`)}
                   className="flex flex-1 items-center gap-2.5 min-w-0 active:opacity-70 transition-opacity"
                 >
                   <span className={`w-5 text-center font-display text-xs font-bold ${
@@ -91,18 +63,17 @@ const Standings = () => {
                     {member.avatar}
                   </div>
                   <p className="truncate text-xs font-semibold text-foreground flex-1 min-w-0">{member.teamName}</p>
-                  <span className="w-10 text-center text-[11px] font-semibold text-foreground">{member.wins}-{member.losses}</span>
+                  <span className="w-10 text-center text-[11px] font-semibold text-foreground">{member.record.wins}-{member.record.losses}</span>
                   <span className={`w-10 text-center font-display text-[10px] font-bold ${
                     member.streak?.startsWith("W") ? "text-gain" : member.streak?.startsWith("L") ? "text-loss" : "text-muted-foreground"
                   }`}>
                     {member.streak || "—"}
                   </span>
                 </button>
-                {member.userId !== user?.id ? (
+                {member.id !== user?.id ? (
                   <button
-                    onClick={(e) => handleDM(e, member.userId)}
                     className="shrink-0 w-6 rounded-md p-1 text-muted-foreground hover:text-primary active:bg-accent transition-colors"
-                    aria-label={`Message ${member.displayName}`}
+                    aria-label={`Message ${member.name}`}
                   >
                     <MessageCircle className="h-3.5 w-3.5" />
                   </button>

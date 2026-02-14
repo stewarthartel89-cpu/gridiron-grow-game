@@ -222,6 +222,35 @@ export const weeklyMatchups: Matchup[] = [
   { id: "m4", week: currentWeek, home: leagueMembers[3], away: leagueMembers[4] },
 ];
 
+// Full season schedule (mock) — round-robin style
+const generateSeasonSchedule = (): Matchup[] => {
+  const pairings = [
+    [[0,7],[1,6],[2,5],[3,4]],
+    [[0,6],[7,5],[1,4],[2,3]],
+    [[0,5],[6,4],[7,3],[1,2]],
+    [[0,4],[5,3],[6,2],[7,1]],
+    [[0,3],[4,2],[5,1],[6,7]],
+    [[0,2],[3,1],[4,7],[5,6]],
+    [[0,1],[2,7],[3,6],[4,5]],
+  ];
+  const schedule: Matchup[] = [];
+  for (let week = 1; week <= seasonLength; week++) {
+    const weekPairings = pairings[(week - 1) % pairings.length];
+    weekPairings.forEach(([h, a], idx) => {
+      const isFinal = week < currentWeek;
+      schedule.push({
+        id: `s-w${week}-${idx}`,
+        week,
+        home: leagueMembers[h],
+        away: leagueMembers[a],
+      });
+    });
+  }
+  return schedule;
+};
+
+export const seasonSchedule: Matchup[] = generateSeasonSchedule();
+
 export interface ActivityItem {
   id: string;
   type: "trade" | "matchup_result" | "deposit" | "badge" | "trash_talk" | "lineup_alert";
