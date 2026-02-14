@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, Users, ChevronRight, Settings as SettingsIcon, MessageCircle } from "lucide-react";
+import { Plus, Users, ChevronRight, Settings as SettingsIcon, MessageCircle, Trophy } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useChat";
 import PageTransition from "@/components/PageTransition";
 import StockTicker from "@/components/StockTicker";
@@ -88,23 +88,29 @@ const LeagueCarousel = () => {
                       setActiveLeague(card.league.leagueId);
                       navigate("/league");
                     }}
-                    className="group relative w-full overflow-hidden rounded-xl border border-primary/30 bg-card p-4 flex flex-col items-start gap-3 transition-all active:border-primary/60 aspect-[4/3]"
+                    className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-4 pb-3 flex flex-col items-center text-center gap-2.5 transition-all active:border-primary/60"
                     style={{
-                      boxShadow: "0 0 16px hsl(152 100% 45% / 0.08), 0 2px 12px hsl(0 0% 0% / 0.15)",
+                      boxShadow: "0 0 20px hsl(152 100% 45% / 0.1), 0 4px 16px hsl(0 0% 0% / 0.18)",
                     }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none" />
-                    <div className="absolute -top-8 -right-8 h-20 w-20 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/12 via-transparent to-primary/6 pointer-events-none" />
+                    <div className="absolute -top-10 -right-10 h-24 w-24 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
 
-                    <div className="relative flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary glow-primary">
-                        <Users className="h-5 w-5 text-primary-foreground" />
-                      </div>
-                      <p className="font-display text-sm font-bold text-foreground tracking-wide truncate">{card.league.leagueName}</p>
+                    <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-primary glow-primary">
+                      <Trophy className="h-7 w-7 text-primary-foreground" />
                     </div>
 
-                    <div className="relative flex items-center gap-1 rounded-lg bg-primary/15 px-3 py-1.5 text-primary text-[11px] font-bold tracking-wide mt-auto">
-                      Enter <ChevronRight className="h-3 w-3" />
+                    <div className="relative">
+                      <p className="font-display text-base font-bold text-foreground tracking-wide leading-tight truncate max-w-[130px]">{card.league.leagueName}</p>
+                    </div>
+
+                    <div className="relative flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <Users className="h-3 w-3" />
+                      <span className="font-semibold">{card.league.memberCount}/{card.league.maxMembers} members</span>
+                    </div>
+
+                    <div className="relative flex items-center gap-1 rounded-xl bg-primary/15 px-4 py-1.5 text-primary text-[11px] font-bold tracking-wide">
+                      Play <ChevronRight className="h-3 w-3" />
                     </div>
                   </motion.button>
                 </div>
