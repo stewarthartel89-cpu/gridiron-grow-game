@@ -53,7 +53,7 @@ const LeaguePage = () => {
     <PageTransition>
       <div
         className="min-h-[100dvh] pb-28 transition-colors duration-500"
-        style={{ "--tab-accent": TAB_ACCENTS[tab], backgroundColor: `hsl(${TAB_ACCENTS[tab]} / 0.06)` } as React.CSSProperties}
+        style={{ "--tab-accent": TAB_ACCENTS[tab], backgroundColor: `hsl(${TAB_ACCENTS[tab]} / 0.15)` } as React.CSSProperties}
       >
         {/* Header */}
         <header className="border-b border-border bg-card safe-area-top">
