@@ -133,14 +133,15 @@ const MatchupScoreboard = ({ matchup, onTeamClick }: { matchup: Matchup; onTeamC
       </div>
 
       {/* Win Probability */}
-      <div className="border-t border-border px-3 py-2">
-        <div className="flex items-center gap-2">
-          <span className={`text-[10px] font-bold w-7 text-right ${homeWinning ? "text-primary" : "text-muted-foreground"}`}>{homeWinPct}%</span>
-          <div className="flex-1 h-2 rounded-full overflow-hidden bg-secondary flex">
-            <div className="h-full rounded-l-full bg-primary transition-all duration-500" style={{ width: `${homeWinPct}%` }} />
-            <div className="h-full rounded-r-full bg-loss/60 transition-all duration-500" style={{ width: `${awayWinPct}%` }} />
+      <div className="border-t border-border px-3 py-2.5">
+        <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center mb-1.5">Win Probability</p>
+        <div className="flex items-center gap-2.5">
+          <span className={`text-xs font-black font-display w-9 text-right tabular-nums ${homeWinning ? "text-foreground" : "text-muted-foreground/50"}`}>{homeWinPct}%</span>
+          <div className="flex-1 h-3 rounded-full overflow-hidden bg-muted-foreground/10 flex shadow-inner">
+            <div className="h-full rounded-l-full bg-foreground transition-all duration-700 ease-out" style={{ width: `${homeWinPct}%` }} />
+            <div className="h-full rounded-r-full bg-muted-foreground/20 transition-all duration-700 ease-out" style={{ width: `${awayWinPct}%` }} />
           </div>
-          <span className={`text-[10px] font-bold w-7 ${!homeWinning ? "text-loss" : "text-muted-foreground"}`}>{awayWinPct}%</span>
+          <span className={`text-xs font-black font-display w-9 tabular-nums ${!homeWinning ? "text-foreground" : "text-muted-foreground/50"}`}>{awayWinPct}%</span>
         </div>
       </div>
     </>
