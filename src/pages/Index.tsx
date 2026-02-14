@@ -53,12 +53,12 @@ const LeagueCarousel = () => {
 
     return (
       <div className="px-4">
-        <div ref={emblaRef} className="overflow-hidden cursor-grab active:cursor-grabbing">
+        <div ref={emblaRef} className="overflow-visible cursor-grab active:cursor-grabbing" style={{ overflow: "hidden", clipPath: "inset(-12px -4px -12px -4px)" }}>
           <div className="flex">
             {cards.map((card, i) => {
               if (card.type === "cta") {
                 return (
-                  <div key="cta" className="min-w-0 shrink-0 grow-0 basis-[46%] pr-2.5">
+                  <div key="cta" className="min-w-0 shrink-0 grow-0 basis-[46%] px-1.5 py-3">
                     <motion.button
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{
@@ -95,7 +95,7 @@ const LeagueCarousel = () => {
               }
 
               return (
-                <div key={card.league.leagueId} className="min-w-0 shrink-0 grow-0 basis-[46%] pr-2.5">
+                <div key={card.league.leagueId} className="min-w-0 shrink-0 grow-0 basis-[46%] px-1.5 py-3">
                   <motion.button
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
