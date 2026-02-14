@@ -15,7 +15,7 @@
     --popover: 220 18% 10%;
     --popover-foreground: 210 20% 95%;
 
-    --primary: 152 60% 48%;
+    --primary: 152 100% 45%;
     --primary-foreground: 220 20% 7%;
 
     --secondary: 220 16% 16%;
@@ -30,7 +30,7 @@
     --destructive: 0 72% 55%;
     --destructive-foreground: 210 20% 95%;
 
-    --gain: 152 60% 48%;
+    --gain: 152 100% 45%;
     --gain-foreground: 220 20% 7%;
     --loss: 0 72% 55%;
     --loss-foreground: 210 20% 95%;
@@ -45,18 +45,18 @@
 
     --border: 220 14% 16%;
     --input: 220 14% 16%;
-    --ring: 152 60% 48%;
+    --ring: 152 100% 45%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 220 18% 10%;
     --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 152 60% 48%;
+    --sidebar-primary: 152 100% 45%;
     --sidebar-primary-foreground: 220 20% 7%;
     --sidebar-accent: 220 16% 18%;
     --sidebar-accent-foreground: 210 20% 95%;
     --sidebar-border: 220 14% 16%;
-    --sidebar-ring: 152 60% 48%;
+    --sidebar-ring: 152 100% 45%;
 
     --font-display: 'Oswald', sans-serif;
     --font-body: 'Inter', sans-serif;
@@ -72,7 +72,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 10%;
 
-    --primary: 152 60% 38%;
+    --primary: 152 100% 36%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 92%;
@@ -87,7 +87,7 @@
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --gain: 152 60% 38%;
+    --gain: 152 100% 36%;
     --gain-foreground: 0 0% 100%;
     --loss: 0 72% 50%;
     --loss-foreground: 0 0% 100%;
@@ -102,16 +102,16 @@
 
     --border: 220 14% 88%;
     --input: 220 14% 88%;
-    --ring: 152 60% 38%;
+    --ring: 152 100% 36%;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 10%;
-    --sidebar-primary: 152 60% 38%;
+    --sidebar-primary: 152 100% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 94%;
     --sidebar-accent-foreground: 220 20% 10%;
     --sidebar-border: 220 14% 88%;
-    --sidebar-ring: 152 60% 38%;
+    --sidebar-ring: 152 100% 36%;
   }
 }
 
