@@ -6,6 +6,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { calculateDiversification } from "@/lib/diversificationModifier";
 import DiversificationModifier from "@/components/DiversificationModifier";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { leagueMembers } from "@/data/mockData";
 
 type Sector = "Tech" | "Healthcare" | "Energy" | "Financials" | "Consumer" | "Index/ETF" | "International" | "Real Estate" | "Crypto" | "Industrials";
 
@@ -131,12 +132,41 @@ const TeamDetail = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId || !leagueId) return;
+    if (!userId) return;
+
+    // Check if this is a mock member first
+    const mockMember = leagueMembers.find((m) => m.id === userId);
+    if (mockMember) {
+      const name = mockMember.name;
+      setTeam({
+        displayName: name,
+        teamName: mockMember.teamName,
+        avatar: mockMember.avatar,
+        wins: mockMember.record.wins,
+        losses: mockMember.record.losses,
+        streak: mockMember.streak,
+        xp: mockMember.xp,
+        level: mockMember.level,
+        holdings: mockMember.holdings.map((h) => ({
+          symbol: h.symbol,
+          name: h.name,
+          shares: h.shares,
+          avg_cost: h.avgCost,
+          current_price: h.currentPrice,
+          allocation: h.allocation,
+          sector: h.sector,
+          weeks_held: h.weeksHeld,
+        })),
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (!leagueId) return;
 
     const fetchTeam = async () => {
       setLoading(true);
 
-      // Fetch profile, league member, and holdings in parallel
       const [profileRes, memberRes, holdingsRes] = await Promise.all([
         supabase.from("profiles").select("display_name, team_name, xp, level, avatar_url").eq("user_id", userId).maybeSingle(),
         supabase.from("league_members").select("wins, losses, streak").eq("league_id", leagueId).eq("user_id", userId).maybeSingle(),

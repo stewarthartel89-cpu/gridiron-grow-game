@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle, Trophy } from "lucide-react";
 import { leagueMembers, leagueSettings } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLeague } from "@/contexts/LeagueContext";
+import { findOrCreateDM } from "@/hooks/useChat";
 
 const Standings = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { leagueId } = useLeague();
+  const [loadingDm, setLoadingDm] = useState<string | null>(null);
 
   const playoffTeams = leagueSettings.playoffTeams;
   const playoffStartWeek = leagueSettings.playoffStartWeek;
@@ -74,8 +79,17 @@ const Standings = () => {
                   <button
                     className="shrink-0 w-6 rounded-md p-1 text-muted-foreground hover:text-primary active:bg-accent transition-colors"
                     aria-label={`Message ${member.name}`}
+                    disabled={loadingDm === member.id}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!user || !leagueId) return;
+                      setLoadingDm(member.id);
+                      const convoId = await findOrCreateDM(user.id, member.id, leagueId);
+                      setLoadingDm(null);
+                      if (convoId) navigate(`/chat?dm=${convoId}`);
+                    }}
                   >
-                    <MessageCircle className="h-3.5 w-3.5" />
+                    <MessageCircle className={`h-3.5 w-3.5 ${loadingDm === member.id ? "animate-pulse" : ""}`} />
                   </button>
                 ) : <span className="w-6" />}
               </div>
