@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface UserLeague {
   leagueId: string;
   leagueName: string;
+  memberCount: number;
+  maxMembers: number;
 }
 
 interface LeagueContextType {
@@ -45,13 +47,26 @@ export const LeagueProvider = ({ children }: { children: ReactNode }) => {
 
     const { data, error } = await supabase
       .from("league_members")
-      .select("league_id, leagues(name)")
+      .select("league_id, leagues(name, max_members)")
       .eq("user_id", user.id);
 
     if (!error && data && data.length > 0) {
+      const leagueIds = data.map((d: any) => d.league_id);
+      const { data: countData } = await supabase
+        .from("league_members")
+        .select("league_id")
+        .in("league_id", leagueIds);
+
+      const counts: Record<string, number> = {};
+      countData?.forEach((r: any) => {
+        counts[r.league_id] = (counts[r.league_id] || 0) + 1;
+      });
+
       const mapped: UserLeague[] = data.map((d: any) => ({
         leagueId: d.league_id,
         leagueName: d.leagues?.name ?? "Unknown League",
+        memberCount: counts[d.league_id] || 1,
+        maxMembers: d.leagues?.max_members ?? 10,
       }));
       setLeagues(mapped);
       // Keep current active if still valid, otherwise pick first
