@@ -14,6 +14,13 @@ import ScoutContent from "@/components/ScoutContent";
 import LeagueInfoContent from "@/components/LeagueInfoContent";
 import PortfolioContent from "@/components/PortfolioContent";
 
+const TAB_ACCENTS: Record<string, string> = {
+  portfolio: "210 80% 55%",   // blue
+  matchup: "15 90% 55%",     // orange-red
+  scout: "45 90% 55%",       // amber
+  league: "152 100% 45%",    // green (primary)
+};
+
 const TABS = [
   { key: "portfolio", label: "Portfolio", icon: Briefcase },
   { key: "matchup", label: "Matchup", icon: Swords },
@@ -44,7 +51,10 @@ const LeaguePage = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-[100dvh] bg-background pb-28">
+      <div
+        className="min-h-[100dvh] bg-background pb-28"
+        style={{ "--tab-accent": TAB_ACCENTS[tab] } as React.CSSProperties}
+      >
         {/* Header */}
         <header className="border-b border-border bg-card safe-area-top">
           <div className="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
@@ -131,17 +141,21 @@ const LeaguePage = () => {
                   whileTap={{ scale: 0.95 }}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold tracking-wide transition-all duration-200 relative ${
                     isActive
-                      ? "bg-primary/15 text-primary"
+                      ? ""
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   }`}
+                  style={isActive ? { color: `hsl(${TAB_ACCENTS[key]})`, backgroundColor: `hsl(${TAB_ACCENTS[key]} / 0.15)` } : undefined}
                 >
-                  <Icon className={`h-4 w-4 ${isActive ? "drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]" : ""}`} />
+                  <Icon className="h-4 w-4" style={isActive ? { filter: `drop-shadow(0 0 6px hsl(${TAB_ACCENTS[key]} / 0.6))` } : undefined} />
                   <span className="font-display uppercase">{label}</span>
                   {isActive && (
                     <motion.div
                       layoutId="tab-glow"
-                      className="absolute inset-0 rounded-xl border border-primary/30 pointer-events-none"
-                      style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.15), inset 0 0 12px hsl(var(--primary) / 0.05)" }}
+                      className="absolute inset-0 rounded-xl pointer-events-none"
+                      style={{
+                        border: `1px solid hsl(${TAB_ACCENTS[key]} / 0.3)`,
+                        boxShadow: `0 0 12px hsl(${TAB_ACCENTS[key]} / 0.15), inset 0 0 12px hsl(${TAB_ACCENTS[key]} / 0.05)`,
+                      }}
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}

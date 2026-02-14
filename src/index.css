@@ -154,11 +154,23 @@
   .glow-primary {
     box-shadow: 0 0 16px hsl(var(--primary) / 0.2);
   }
+  .glow-tab-accent {
+    box-shadow: 0 0 16px hsl(var(--tab-accent) / 0.2);
+  }
   .glow-balance {
     text-shadow: 0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--primary) / 0.1);
   }
   .glow-score {
     text-shadow: 0 0 20px hsl(var(--gain) / 0.4);
+  }
+  .text-tab-accent {
+    color: hsl(var(--tab-accent));
+  }
+  .bg-tab-accent {
+    background-color: hsl(var(--tab-accent));
+  }
+  .border-tab-accent {
+    border-color: hsl(var(--tab-accent));
   }
 }
 
