@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLeagueData } from "@/hooks/useLeagueData";
+import { leagueSettings } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeague } from "@/contexts/LeagueContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +75,7 @@ const CommissionerRow = ({
 };
 
 const LeagueInfoContent = () => {
-  const { settings, loading } = useLeagueData();
+  const mockSettings = leagueSettings;
   const { user } = useAuth();
   const { refetch, leagueId: activeLeagueId } = useLeague();
   const navigate = useNavigate();
@@ -84,7 +84,13 @@ const LeagueInfoContent = () => {
   const [showTerminateConfirm, setShowTerminateConfirm] = useState(false);
   const [terminating, setTerminating] = useState(false);
 
-  const isCommissioner = settings && user && settings.commissionerId === user.id;
+  const isCommissioner = true; // mock: always commissioner
+  const settings = {
+    ...mockSettings,
+    commissionerId: user?.id || "",
+    commissionerName: mockSettings.commissioner,
+    inviteCode: "ABC123",
+  };
 
   const copyInvite = () => {
     if (settings?.inviteCode) {
@@ -121,7 +127,7 @@ const LeagueInfoContent = () => {
     if (error) console.error("League update error:", error);
   };
 
-  if (loading || !settings) {
+  if (!settings) {
     return <div className="flex items-center justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   }
 
