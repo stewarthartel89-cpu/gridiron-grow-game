@@ -104,7 +104,7 @@ const LeagueCarousel = () => {
                       setActiveLeague(card.league.leagueId);
                       navigate("/league");
                     }}
-                    className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-4 pb-3 flex flex-col items-center text-center gap-2.5 transition-all active:border-primary/60"
+                    className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-primary/60"
                     style={{
                       boxShadow: "0 0 20px hsl(152 100% 45% / 0.1), 0 4px 16px hsl(0 0% 0% / 0.18)",
                     }}
@@ -116,17 +116,11 @@ const LeagueCarousel = () => {
                       <Trophy className="h-7 w-7 text-primary-foreground" />
                     </div>
 
-                    <div className="relative">
-                      <p className="font-display text-base font-bold text-foreground tracking-wide leading-tight truncate max-w-[130px]">{card.league.leagueName}</p>
-                    </div>
+                    <p className="relative font-display text-base font-bold text-foreground tracking-wide leading-tight truncate max-w-[130px]">{card.league.leagueName}</p>
 
                     <div className="relative flex items-center gap-1.5 text-[10px] text-muted-foreground">
                       <Users className="h-3 w-3" />
                       <span className="font-semibold">{card.league.memberCount}/{card.league.maxMembers} members</span>
-                    </div>
-
-                    <div className="relative flex items-center gap-1 rounded-xl bg-primary/15 px-4 py-1.5 text-primary text-[11px] font-bold tracking-wide">
-                      Play <ChevronRight className="h-3 w-3" />
                     </div>
                   </motion.button>
                 </div>
