@@ -51,92 +51,81 @@ const LeagueCarousel = () => {
     emblaApi?.scrollTo(index);
   }, [emblaApi]);
 
-  return (
-    <div className="px-4">
-      <div ref={emblaRef} className="overflow-hidden cursor-grab active:cursor-grabbing">
-        <div className="flex">
-          {cards.map((card, i) => {
-            if (card.type === "cta") {
+    return (
+      <div className="px-4">
+        <div ref={emblaRef} className="overflow-hidden cursor-grab active:cursor-grabbing">
+          <div className="flex">
+            {cards.map((card, i) => {
+              if (card.type === "cta") {
+                return (
+                  <div key="cta" className="min-w-0 shrink-0 grow-0 basis-[46%] pr-2.5">
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      onClick={() => navigate("/league-hub")}
+                      className="w-full rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-4 flex flex-col items-center justify-center gap-2 active:bg-primary/10 transition-colors aspect-[4/3]"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                        <Plus className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-display text-xs font-bold text-foreground">Create or Join</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Start competing</p>
+                      </div>
+                    </motion.button>
+                  </div>
+                );
+              }
+
               return (
-                <div key="cta" className="min-w-0 shrink-0 grow-0 basis-[85%] pr-3">
+                <div key={card.league.leagueId} className="min-w-0 shrink-0 grow-0 basis-[46%] pr-2.5">
                   <motion.button
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    onClick={() => navigate("/league-hub")}
-                    className="w-full rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-6 flex flex-col items-center justify-center gap-3 active:bg-primary/10 transition-colors"
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ delay: i * 0.05 }}
+                    onClick={() => {
+                      setActiveLeague(card.league.leagueId);
+                      navigate("/league");
+                    }}
+                    className="group relative w-full overflow-hidden rounded-xl border border-primary/30 bg-card p-4 flex flex-col items-start gap-3 transition-all active:border-primary/60 aspect-[4/3]"
+                    style={{
+                      boxShadow: "0 0 16px hsl(152 100% 45% / 0.08), 0 2px 12px hsl(0 0% 0% / 0.15)",
+                    }}
                   >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
-                      <Plus className="h-7 w-7 text-primary" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none" />
+                    <div className="absolute -top-8 -right-8 h-20 w-20 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
+
+                    <div className="relative flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary glow-primary">
+                        <Users className="h-5 w-5 text-primary-foreground" />
+                      </div>
+                      <p className="font-display text-sm font-bold text-foreground tracking-wide truncate">{card.league.leagueName}</p>
                     </div>
-                    <div className="text-center">
-                      <p className="font-display text-base font-bold text-foreground">Create or Join a League</p>
-                      <p className="text-xs text-muted-foreground mt-1">Start competing with friends</p>
+
+                    <div className="relative flex items-center gap-1 rounded-lg bg-primary/15 px-3 py-1.5 text-primary text-[11px] font-bold tracking-wide mt-auto">
+                      Enter <ChevronRight className="h-3 w-3" />
                     </div>
                   </motion.button>
                 </div>
               );
-            }
-
-            return (
-              <div key={card.league.leagueId} className="min-w-0 shrink-0 grow-0 basis-[85%] pr-3">
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ delay: i * 0.05 }}
-                  onClick={() => {
-                    setActiveLeague(card.league.leagueId);
-                    navigate("/league");
-                  }}
-                  className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-6 flex flex-col items-start gap-4 transition-all active:border-primary/60"
-                  style={{
-                    boxShadow: "0 0 20px hsl(152 100% 45% / 0.08), 0 4px 24px hsl(0 0% 0% / 0.2)",
-                  }}
-                >
-                  {/* Glow gradient background */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none" />
-                  <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
-
-                  <div className="relative flex w-full items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary glow-primary">
-                      <Users className="h-7 w-7 text-primary-foreground" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-display text-lg font-bold text-foreground tracking-wide">{card.league.leagueName}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">Tap to enter league</p>
-                    </div>
-                  </div>
-
-                  <div className="relative flex w-full items-center justify-between mt-auto">
-                    <div className="flex items-center gap-1.5 rounded-xl bg-primary/15 px-4 py-2 text-primary text-xs font-bold tracking-wide">
-                      Enter League <ChevronRight className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="flex -space-x-1.5">
-                      {[...Array(3)].map((_, j) => (
-                        <div key={j} className="h-6 w-6 rounded-full border-2 border-card bg-secondary" />
-                      ))}
-                    </div>
-                  </div>
-                </motion.button>
-              </div>
-            );
-          })}
+            })}
+          </div>
         </div>
+        {cards.length > 1 && (
+          <div className="flex justify-center gap-1.5 mt-3">
+            {cards.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollTo(i)}
+                className={`rounded-full transition-all ${i === selectedIndex ? "h-2 w-5 bg-primary" : "h-2 w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"}`}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      {cards.length > 1 && (
-        <div className="flex justify-center gap-1.5 mt-3">
-          {cards.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => scrollTo(i)}
-              className={`rounded-full transition-all ${i === selectedIndex ? "h-2 w-5 bg-primary" : "h-2 w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"}`}
-              aria-label={`Go to slide ${i + 1}`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
+    );
 };
 
 const NewsPreview = () => {
