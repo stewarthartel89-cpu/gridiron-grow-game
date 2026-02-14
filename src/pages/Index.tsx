@@ -52,22 +52,22 @@ const LeagueCarousel = () => {
   }, [emblaApi]);
 
     return (
-      <div className="px-4">
-        <div ref={emblaRef} className="overflow-visible cursor-grab active:cursor-grabbing" style={{ overflow: "hidden", clipPath: "inset(-12px -4px -12px -4px)" }}>
+      <div className="px-2">
+        <div ref={emblaRef} className="overflow-hidden cursor-grab active:cursor-grabbing" style={{ padding: "16px 0", margin: "-16px 0" }}>
           <div className="flex">
             {cards.map((card, i) => {
               if (card.type === "cta") {
                 return (
-                  <div key="cta" className="min-w-0 shrink-0 grow-0 basis-[46%] px-1.5 py-3">
+                  <div key="cta" className="min-w-0 shrink-0 grow-0 basis-[46%] px-2 py-1">
                     <motion.button
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{
                         opacity: 1,
                         scale: 1,
                         boxShadow: [
-                          "0 2px 16px hsl(0 0% 0% / 0.25), 0 0 0 1px hsl(0 0% 100% / 0.04)",
-                          "0 4px 24px hsl(0 0% 0% / 0.35), 0 0 0 1px hsl(0 0% 100% / 0.06)",
-                          "0 2px 16px hsl(0 0% 0% / 0.25), 0 0 0 1px hsl(0 0% 100% / 0.04)",
+                          "0 4px 20px hsl(0 0% 0% / 0.18), 0 1px 4px hsl(0 0% 0% / 0.1)",
+                          "0 6px 28px hsl(0 0% 0% / 0.28), 0 1px 4px hsl(0 0% 0% / 0.1)",
+                          "0 4px 20px hsl(0 0% 0% / 0.18), 0 1px 4px hsl(0 0% 0% / 0.1)",
                         ],
                       }}
                       transition={{
@@ -75,8 +75,8 @@ const LeagueCarousel = () => {
                       }}
                       whileTap={{ scale: 0.96 }}
                       onClick={() => navigate("/league-hub")}
-                      className="group relative w-full overflow-hidden rounded-2xl border-0 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all aspect-[4/3]"
-                      style={{ boxShadow: "0 2px 16px hsl(0 0% 0% / 0.25), 0 0 0 1px hsl(0 0% 100% / 0.04)" }}
+                      className="group relative w-full overflow-hidden rounded-2xl bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all aspect-[4/3]"
+                      style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.18), 0 1px 4px hsl(0 0% 0% / 0.1)" }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-primary/4 pointer-events-none" />
 
@@ -95,7 +95,7 @@ const LeagueCarousel = () => {
               }
 
               return (
-                <div key={card.league.leagueId} className="min-w-0 shrink-0 grow-0 basis-[46%] px-1.5 py-3">
+                <div key={card.league.leagueId} className="min-w-0 shrink-0 grow-0 basis-[46%] px-2 py-1">
                   <motion.button
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -105,9 +105,9 @@ const LeagueCarousel = () => {
                       setActiveLeague(card.league.leagueId);
                       navigate("/league");
                     }}
-                    className="group relative w-full overflow-hidden rounded-2xl border-0 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all aspect-[4/3]"
+                    className="group relative w-full overflow-hidden rounded-2xl bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all aspect-[4/3]"
                     style={{
-                      boxShadow: "0 2px 16px hsl(0 0% 0% / 0.25), 0 0 0 1px hsl(0 0% 100% / 0.04)",
+                      boxShadow: "0 4px 20px hsl(0 0% 0% / 0.18), 0 1px 4px hsl(0 0% 0% / 0.1)",
                     }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/12 via-transparent to-primary/6 pointer-events-none" />
