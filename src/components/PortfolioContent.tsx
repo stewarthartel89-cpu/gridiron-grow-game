@@ -97,7 +97,7 @@ const PortfolioContent = () => {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-card via-card to-primary/[0.06] p-5 pb-4 card-glow-primary noise-overlay"
+        className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-card via-card to-primary/[0.06] p-5 pb-4"
       >
         {/* Ambient glow orb */}
         <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
@@ -144,7 +144,7 @@ const PortfolioContent = () => {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.4 }}
-        className="relative overflow-hidden rounded-xl border border-border bg-card card-elevated"
+        className="relative overflow-hidden rounded-xl border border-border bg-card"
       >
         {/* Subtle shimmer accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent animate-shimmer" />
@@ -205,7 +205,7 @@ const PortfolioContent = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="rounded-2xl border border-border bg-card card-elevated p-4 -mx-1"
+        className="rounded-2xl border border-border bg-card p-4 -mx-1"
       >
         <div className="h-44">
           <ResponsiveContainer width="100%" height="100%">
@@ -249,7 +249,7 @@ const PortfolioContent = () => {
       </motion.div>
 
       {/* Holdings list */}
-      <div className="rounded-xl border border-border bg-card card-elevated overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="px-4 py-3 border-b border-border">
           <p className="font-display text-xs font-bold text-muted-foreground uppercase tracking-wider">
             Holdings ({allHoldings.length})

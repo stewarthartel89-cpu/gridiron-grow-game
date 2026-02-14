@@ -114,7 +114,7 @@ const MatchupScoreboard = ({ matchup, onTeamClick }: { matchup: Matchup; onTeamC
       </div>
 
       {/* Game Score Row */}
-      <div className="flex items-center justify-between border-t border-border px-3 py-2 bg-gradient-to-r from-secondary/30 via-secondary/10 to-secondary/30">
+      <div className="flex items-center justify-between border-t border-border px-3 py-2 bg-secondary/20">
         <div className="flex items-center gap-1.5">
           {homeScore >= 0 ? <TrendingUp className="h-3 w-3 text-gain" /> : <TrendingDown className="h-3 w-3 text-loss" />}
           <span className={`font-display text-sm font-bold ${homeScore >= 0 ? "text-gain" : "text-loss"}`}>
@@ -215,7 +215,7 @@ const MatchupDetailView = () => {
   return (
     <div className="space-y-3">
       {/* Unified swipeable scoreboard */}
-      <div className="rounded-xl border border-glow-primary bg-card card-elevated overflow-hidden relative noise-overlay">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
             {matchups.map((m) => (
@@ -247,7 +247,7 @@ const MatchupDetailView = () => {
 
       {/* Holdings by bucket for selected matchup */}
       {bucketRows.map(({ bucket, rows }) => (
-        <div key={bucket} className="rounded-xl border border-border bg-card card-elevated overflow-hidden">
+        <div key={bucket} className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="border-b border-border bg-secondary/40 px-3 py-1.5">
             <h3 className="font-display text-[10px] font-bold text-foreground uppercase tracking-wider">{bucket}</h3>
           </div>

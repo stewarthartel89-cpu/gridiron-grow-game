@@ -32,7 +32,7 @@ const DiversificationModifier = memo(({ result, compact = false }: Props) => {
   return (
     <div className="space-y-3">
       {/* Modifier Score */}
-      <div className="rounded-xl border border-border bg-card card-elevated p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Shield className={`h-4 w-4 ${color}`} />
@@ -82,7 +82,7 @@ const DiversificationModifier = memo(({ result, compact = false }: Props) => {
 
       {/* Allocation Breakdown */}
       {!compact && (
-        <div className="rounded-xl border border-border bg-card card-elevated p-4">
+        <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-display text-sm font-bold text-foreground">ALLOCATION vs TARGET</h3>
             <span className="text-[10px] text-muted-foreground">Worst deviation: {worstDeviation.toFixed(1)}%</span>
