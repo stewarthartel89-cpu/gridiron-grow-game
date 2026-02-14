@@ -15,10 +15,10 @@ import LeagueInfoContent from "@/components/LeagueInfoContent";
 import PortfolioContent from "@/components/PortfolioContent";
 
 const TAB_ACCENTS: Record<string, string> = {
-  portfolio: "210 80% 55%",   // blue
+  portfolio: "152 100% 45%",  // green
   matchup: "15 90% 55%",     // orange-red
-  scout: "45 90% 55%",       // amber
-  league: "152 100% 45%",    // green (primary)
+  scout: "210 80% 55%",      // blue
+  league: "45 90% 55%",      // yellow
 };
 
 const TABS = [
