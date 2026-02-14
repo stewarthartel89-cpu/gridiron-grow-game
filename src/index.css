@@ -154,6 +154,31 @@
   .glow-primary {
     box-shadow: 0 0 16px hsl(var(--primary) / 0.2);
   }
+  .glow-balance {
+    text-shadow: 0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--primary) / 0.1);
+  }
+  .glow-score {
+    text-shadow: 0 0 20px hsl(var(--gain) / 0.4);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+.animate-float {
+  animation: float-subtle 3s ease-in-out infinite;
 }
 
 @keyframes marquee {

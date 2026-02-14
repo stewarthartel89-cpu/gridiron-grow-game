@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { leagueMembers, Sector } from "@/data/mockData";
-import { ArrowRightLeft, TrendingUp, TrendingDown, Zap } from "lucide-react";
+import { ArrowRightLeft, TrendingUp, TrendingDown, Zap, Trophy, Flame } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { calculateDiversification } from "@/lib/diversificationModifier";
 import DiversificationModifier from "@/components/DiversificationModifier";
+import { motion } from "framer-motion";
 
 const SECTOR_COLORS: Record<Sector, string> = {
   "Tech": "bg-[hsl(200,70%,50%)]",
@@ -91,58 +92,106 @@ const PortfolioContent = () => {
 
   return (
     <>
-      {/* Balance + Growth + Game Score */}
-      <div className="text-center space-y-1">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Portfolio Balance</p>
-        <h2 className="font-display text-3xl font-bold text-foreground tracking-tight">
-          ${totalBalance.toLocaleString()}
-        </h2>
-        <div className="flex items-center justify-center gap-1.5">
-          {isUp ? <TrendingUp className="h-4 w-4 text-gain" /> : <TrendingDown className="h-4 w-4 text-loss" />}
-          <span className={`text-sm font-semibold ${isUp ? "text-gain" : "text-loss"}`}>
-            {isUp ? "+" : ""}{dollarChange.toFixed(2)} ({isUp ? "+" : ""}{growthPct.toFixed(2)}%)
-          </span>
-        </div>
-      </div>
+      {/* Hero — Balance + Growth */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-card via-card to-primary/[0.06] p-5 pb-4"
+      >
+        {/* Ambient glow orb */}
+        <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-primary/5 blur-2xl" />
 
-      {/* Game Score Bar */}
-      <div className="rounded-xl border border-border bg-card p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Weekly Growth</span>
-              <span className={`font-display text-lg font-bold ${isUp ? "text-gain" : "text-loss"}`}>
-                {isUp ? "+" : ""}{growthPct.toFixed(2)}%
-              </span>
-            </div>
-            <span className="text-muted-foreground font-display text-lg">×</span>
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Modifier</span>
-              <span className={`font-display text-lg font-bold ${divResult.modifier >= 1 ? "text-gain" : divResult.modifier >= 0.9 ? "text-warning" : "text-loss"}`}>
-                {divResult.modifier.toFixed(2)}x
-              </span>
-            </div>
+        <div className="relative z-10 text-center space-y-2">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+            <Flame className="h-3 w-3" />
+            Portfolio Balance
           </div>
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1">
-              <Zap className="h-3 w-3" /> Game Score
+
+          <motion.h2
+            className="font-display text-5xl font-bold text-foreground tracking-tight glow-balance animate-float"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.15, duration: 0.4, type: "spring", stiffness: 200 }}
+          >
+            ${totalBalance.toLocaleString()}
+          </motion.h2>
+
+          <motion.div
+            className="flex items-center justify-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-bold ${
+              isUp
+                ? "bg-gain/15 text-gain"
+                : "bg-loss/15 text-loss"
+            }`}>
+              {isUp ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+              {isUp ? "+" : ""}{dollarChange.toFixed(2)}
             </span>
-            <span className={`font-display text-2xl font-bold ${gameScoreUp ? "text-gain" : "text-loss"}`}>
+            <span className={`text-sm font-semibold ${isUp ? "text-gain" : "text-loss"}`}>
+              ({isUp ? "+" : ""}{growthPct.toFixed(2)}%)
+            </span>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Game Score Bar — the money stat */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+        className="relative overflow-hidden rounded-xl border border-border bg-card"
+      >
+        {/* Subtle shimmer accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent animate-shimmer" />
+
+        <div className="flex items-stretch divide-x divide-border">
+          <div className="flex-1 p-3 text-center">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold block">Growth</span>
+            <span className={`font-display text-xl font-bold ${isUp ? "text-gain" : "text-loss"}`}>
+              {isUp ? "+" : ""}{growthPct.toFixed(2)}%
+            </span>
+          </div>
+          <div className="flex items-center px-3">
+            <span className="text-muted-foreground/60 font-display text-lg">×</span>
+          </div>
+          <div className="flex-1 p-3 text-center">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold block">Modifier</span>
+            <span className={`font-display text-xl font-bold ${
+              divResult.modifier >= 1 ? "text-gain" : divResult.modifier >= 0.9 ? "text-warning" : "text-loss"
+            }`}>
+              {divResult.modifier.toFixed(2)}x
+            </span>
+          </div>
+          <div className="flex-1 p-3 text-center relative">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center justify-center gap-1">
+              <Zap className="h-3 w-3 text-primary" /> Score
+            </span>
+            <motion.span
+              className={`font-display text-2xl font-bold glow-score ${gameScoreUp ? "text-gain" : "text-loss"}`}
+              initial={{ scale: 1.3, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
+            >
               {gameScoreUp ? "+" : ""}{gameScore.toFixed(2)}%
-            </span>
+            </motion.span>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Time filter */}
-      <div className="flex justify-center gap-1">
+      <div className="flex justify-center gap-1 bg-secondary/50 rounded-full p-1 mx-auto w-fit">
         {(["1D", "1W", "1M", "1Y"] as TimeFilter[]).map(f => (
           <button
             key={f}
             onClick={() => setTimeFilter(f)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
+            className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
               timeFilter === f
-                ? "bg-primary text-primary-foreground"
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -152,43 +201,52 @@ const PortfolioContent = () => {
       </div>
 
       {/* Chart */}
-      <div className="rounded-xl border border-border bg-card p-3 -mx-1">
-        <div className="h-40">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="rounded-2xl border border-border bg-card p-4 -mx-1"
+      >
+        <div className="h-44">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
               <defs>
                 <linearGradient id="portfolioGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={isUp ? "hsl(142,70%,45%)" : "hsl(0,70%,50%)"} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={isUp ? "hsl(142,70%,45%)" : "hsl(0,70%,50%)"} stopOpacity={0} />
+                  <stop offset="0%" stopColor={isUp ? "hsl(152,100%,45%)" : "hsl(0,70%,50%)"} stopOpacity={0.4} />
+                  <stop offset="50%" stopColor={isUp ? "hsl(152,100%,45%)" : "hsl(0,70%,50%)"} stopOpacity={0.1} />
+                  <stop offset="100%" stopColor={isUp ? "hsl(152,100%,45%)" : "hsl(0,70%,50%)"} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 10, fill: "hsl(215,12%,55%)" }}
               />
               <YAxis hide domain={["dataMin - 20", "dataMax + 20"]} />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
+                  background: "hsl(220,18%,10%)",
+                  border: "1px solid hsl(152,100%,45%,0.2)",
+                  borderRadius: "12px",
                   fontSize: "12px",
+                  boxShadow: "0 8px 32px hsl(152,100%,45%,0.1)",
                 }}
                 formatter={(value: number) => [`$${value.toLocaleString()}`, "Value"]}
               />
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke={isUp ? "hsl(142,70%,45%)" : "hsl(0,70%,50%)"}
-                strokeWidth={2}
+                stroke={isUp ? "hsl(152,100%,45%)" : "hsl(0,70%,50%)"}
+                strokeWidth={2.5}
                 fill="url(#portfolioGrad)"
+                dot={false}
+                activeDot={{ r: 5, fill: isUp ? "hsl(152,100%,45%)" : "hsl(0,70%,50%)", stroke: "hsl(220,18%,10%)", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </motion.div>
 
       {/* Holdings list */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
