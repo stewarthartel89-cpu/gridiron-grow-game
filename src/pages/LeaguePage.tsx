@@ -120,23 +120,34 @@ const LeaguePage = () => {
         </header>
 
         {/* Tab bar */}
-        <div className="border-b border-border bg-card">
-          <div className="mx-auto max-w-2xl flex">
-            {TABS.map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition-colors relative ${
-                  tab === key ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-                {tab === key && (
-                  <div className="absolute bottom-0 left-1/4 right-1/4 h-0.5 rounded-full bg-primary" />
-                )}
-              </button>
-            ))}
+        <div className="border-b border-border bg-card/80 backdrop-blur-sm">
+          <div className="mx-auto max-w-2xl flex px-2 py-1.5 gap-1">
+            {TABS.map(({ key, label, icon: Icon }) => {
+              const isActive = tab === key;
+              return (
+                <motion.button
+                  key={key}
+                  onClick={() => setTab(key)}
+                  whileTap={{ scale: 0.95 }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold tracking-wide transition-all duration-200 relative ${
+                    isActive
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 ${isActive ? "drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]" : ""}`} />
+                  <span className="font-display uppercase">{label}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="tab-glow"
+                      className="absolute inset-0 rounded-xl border border-primary/30 pointer-events-none"
+                      style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.15), inset 0 0 12px hsl(var(--primary) / 0.05)" }}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                </motion.button>
+              );
+            })}
           </div>
         </div>
 
