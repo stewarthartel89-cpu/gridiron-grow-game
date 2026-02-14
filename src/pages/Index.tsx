@@ -65,9 +65,9 @@ const LeagueCarousel = () => {
                         opacity: 1,
                         scale: 1,
                         boxShadow: [
-                          "0 0 12px hsl(152 100% 45% / 0.08), 0 4px 16px hsl(0 0% 0% / 0.12)",
-                          "0 0 28px hsl(152 100% 45% / 0.2), 0 4px 16px hsl(0 0% 0% / 0.12)",
-                          "0 0 12px hsl(152 100% 45% / 0.08), 0 4px 16px hsl(0 0% 0% / 0.12)",
+                          "0 0 12px hsl(0 0% 0% / 0.15), 0 4px 16px hsl(0 0% 0% / 0.12)",
+                          "0 0 28px hsl(0 0% 0% / 0.3), 0 4px 16px hsl(0 0% 0% / 0.12)",
+                          "0 0 12px hsl(0 0% 0% / 0.15), 0 4px 16px hsl(0 0% 0% / 0.12)",
                         ],
                       }}
                       transition={{
@@ -75,7 +75,7 @@ const LeagueCarousel = () => {
                       }}
                       whileTap={{ scale: 0.96 }}
                       onClick={() => navigate("/league-hub")}
-                      className="group relative w-full overflow-hidden rounded-2xl border border-dashed border-primary/40 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-primary/60 aspect-[4/3]"
+                      className="group relative w-full overflow-hidden rounded-2xl border border-border bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-foreground/30 aspect-[4/3]"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-primary/4 pointer-events-none" />
 
@@ -104,9 +104,9 @@ const LeagueCarousel = () => {
                       setActiveLeague(card.league.leagueId);
                       navigate("/league");
                     }}
-                    className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-primary/60 aspect-[4/3]"
+                    className="group relative w-full overflow-hidden rounded-2xl border border-border bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-foreground/30 aspect-[4/3]"
                     style={{
-                      boxShadow: "0 0 20px hsl(152 100% 45% / 0.1), 0 4px 16px hsl(0 0% 0% / 0.18)",
+                      boxShadow: "0 0 20px hsl(0 0% 0% / 0.25), 0 4px 16px hsl(0 0% 0% / 0.18)",
                     }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/12 via-transparent to-primary/6 pointer-events-none" />
