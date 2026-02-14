@@ -75,7 +75,7 @@ const LeagueCarousel = () => {
                       }}
                       whileTap={{ scale: 0.96 }}
                       onClick={() => navigate("/league-hub")}
-                      className="group relative w-full overflow-hidden rounded-2xl border border-dashed border-primary/40 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-primary/60"
+                      className="group relative w-full overflow-hidden rounded-2xl border border-dashed border-primary/40 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-primary/60 aspect-square"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-primary/4 pointer-events-none" />
 
@@ -104,7 +104,7 @@ const LeagueCarousel = () => {
                       setActiveLeague(card.league.leagueId);
                       navigate("/league");
                     }}
-                    className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-primary/60"
+                    className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-primary/60 aspect-square"
                     style={{
                       boxShadow: "0 0 20px hsl(152 100% 45% / 0.1), 0 4px 16px hsl(0 0% 0% / 0.18)",
                     }}
