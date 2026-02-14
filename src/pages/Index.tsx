@@ -75,7 +75,7 @@ const LeagueCarousel = () => {
                       }}
                       whileTap={{ scale: 0.96 }}
                       onClick={() => navigate("/league-hub")}
-                      className="group relative w-full overflow-hidden rounded-2xl border border-dashed border-primary/40 bg-card p-4 pb-3 flex flex-col items-center text-center gap-2.5 transition-all active:border-primary/60"
+                      className="group relative w-full overflow-hidden rounded-2xl border border-dashed border-primary/40 bg-card p-5 flex flex-col items-center justify-center text-center gap-2.5 transition-all active:border-primary/60"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-primary/4 pointer-events-none" />
 
@@ -83,17 +83,11 @@ const LeagueCarousel = () => {
                         <Plus className="h-7 w-7 text-primary" />
                       </div>
 
-                      <div className="relative">
-                        <p className="font-display text-base font-bold text-foreground tracking-wide">Create or Join</p>
-                      </div>
+                      <p className="relative font-display text-base font-bold text-foreground tracking-wide">Create or Join</p>
 
-                      <div className="relative text-[10px] text-muted-foreground font-medium">
+                      <p className="relative text-[10px] text-muted-foreground font-medium">
                         Start competing with friends
-                      </div>
-
-                      <div className="relative flex items-center gap-1 rounded-xl bg-primary/15 px-4 py-1.5 text-primary text-[11px] font-bold tracking-wide">
-                        Go <ChevronRight className="h-3 w-3" />
-                      </div>
+                      </p>
                     </motion.button>
                   </div>
                 );
