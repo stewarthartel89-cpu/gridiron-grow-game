@@ -8,8 +8,8 @@ import {
 } from "@/lib/diversificationModifier";
 
 const BUCKET_COLORS: Record<string, string> = {
-  Stocks: "bg-[hsl(200,70%,50%)]",
-  ETFs: "bg-[hsl(35,90%,55%)]",
+  Stocks: "bg-foreground",
+  ETFs: "bg-muted-foreground/40",
 };
 
 const modifierColor = (m: number) =>
