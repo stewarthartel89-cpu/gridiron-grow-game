@@ -6,6 +6,7 @@ import { useLeague } from "@/contexts/LeagueContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Standings from "@/components/Standings";
+import MatchupSchedule from "@/components/MatchupSchedule";
 import {
   Trophy, Crown, Users, Calendar, Shield, DollarSign, Copy, Check, Info,
   Trash2, Loader2, Pencil, X, ChevronRight,
@@ -135,6 +136,9 @@ const LeagueInfoContent = () => {
     <>
       {/* 1. Standings with integrated playoff picture */}
       <Standings />
+
+      {/* 1b. Matchup Schedule */}
+      <MatchupSchedule />
 
       {/* 2. Diversification Modifier */}
       <div className="rounded-xl border border-border bg-card p-4">
