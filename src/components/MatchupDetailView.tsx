@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import useEmblaCarousel from "embla-carousel-react";
 import { LeagueMember, Holding, weeklyMatchups, Matchup } from "@/data/mockData";
 import { classifyHolding, AssetBucket, BUCKETS, calculateDiversification } from "@/lib/diversificationModifier";
@@ -72,7 +73,7 @@ const HoldingRow = ({ home, away, bucket }: { home: Holding | null; away: Holdin
 };
 
 /* ── Single matchup scoreboard (inside carousel slide) ── */
-const MatchupScoreboard = ({ matchup }: { matchup: Matchup }) => {
+const MatchupScoreboard = ({ matchup, onTeamClick }: { matchup: Matchup; onTeamClick: (id: string) => void }) => {
   const { home, away } = matchup;
   const homeDiv = useMemo(() => calculateDiversification(home.holdings), [home]);
   const awayDiv = useMemo(() => calculateDiversification(away.holdings), [away]);
@@ -87,7 +88,7 @@ const MatchupScoreboard = ({ matchup }: { matchup: Matchup }) => {
     <>
       {/* Team Headers */}
       <div className="flex items-center justify-between px-3 py-3">
-        <div className="flex items-center gap-2 min-w-0">
+        <button onClick={() => onTeamClick(home.id)} className="flex items-center gap-2 min-w-0 active:opacity-70 transition-opacity">
           <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold ${
             homeWinning ? "bg-primary text-primary-foreground ring-2 ring-primary/30" : "bg-secondary text-secondary-foreground"
           }`}>
@@ -97,9 +98,9 @@ const MatchupScoreboard = ({ matchup }: { matchup: Matchup }) => {
             <p className="text-xs font-bold text-foreground truncate">{home.teamName}</p>
             <p className="text-[9px] text-muted-foreground">{home.record.wins}-{home.record.losses}</p>
           </div>
-        </div>
+        </button>
         <span className="font-display text-[9px] font-bold text-muted-foreground uppercase tracking-wider shrink-0 mx-2">vs</span>
-        <div className="flex items-center gap-2 flex-row-reverse min-w-0">
+        <button onClick={() => onTeamClick(away.id)} className="flex items-center gap-2 flex-row-reverse min-w-0 active:opacity-70 transition-opacity">
           <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold ${
             !homeWinning ? "bg-primary text-primary-foreground ring-2 ring-primary/30" : "bg-secondary text-secondary-foreground"
           }`}>
@@ -109,7 +110,7 @@ const MatchupScoreboard = ({ matchup }: { matchup: Matchup }) => {
             <p className="text-xs font-bold text-foreground truncate">{away.teamName}</p>
             <p className="text-[9px] text-muted-foreground">{away.record.wins}-{away.record.losses}</p>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Game Score Row */}
@@ -148,6 +149,7 @@ const MatchupScoreboard = ({ matchup }: { matchup: Matchup }) => {
 
 /* ── Main component with infinite carousel ── */
 const MatchupDetailView = () => {
+  const navigate = useNavigate();
   const matchups = weeklyMatchups;
   const { user } = useAuth();
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -217,7 +219,7 @@ const MatchupDetailView = () => {
           <div className="flex">
             {matchups.map((m) => (
               <div key={m.id} className="flex-[0_0_100%] min-w-0">
-                <MatchupScoreboard matchup={m} />
+                <MatchupScoreboard matchup={m} onTeamClick={(id) => navigate(`/team/${id}`)} />
               </div>
             ))}
           </div>
