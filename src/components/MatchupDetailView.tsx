@@ -1,8 +1,9 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { LeagueMember, Holding, weeklyMatchups, Matchup } from "@/data/mockData";
 import { classifyHolding, AssetBucket, BUCKETS, calculateDiversification } from "@/lib/diversificationModifier";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 function groupByBucket(holdings: Holding[]): Record<AssetBucket, Holding[]> {
   const groups: Record<AssetBucket, Holding[]> = { Stocks: [], ETFs: [] };
@@ -148,11 +149,23 @@ const MatchupScoreboard = ({ matchup }: { matchup: Matchup }) => {
 /* ── Main component with infinite carousel ── */
 const MatchupDetailView = () => {
   const matchups = weeklyMatchups;
+  const { user } = useAuth();
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const initialScrollDone = useRef(false);
+
+  // Find the user's matchup index
+  const myMatchupIndex = useMemo(() => {
+    if (!user) return 0;
+    const idx = matchups.findIndex(
+      (m) => m.home.id === user.id || m.away.id === user.id
+    );
+    return idx >= 0 ? idx : 0;
+  }, [matchups, user]);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
     loop: true,
+    startIndex: myMatchupIndex,
   });
 
   const onSelect = useCallback(() => {
@@ -164,8 +177,15 @@ const MatchupDetailView = () => {
     if (!emblaApi) return;
     emblaApi.on("select", onSelect);
     onSelect();
+    // Scroll to user's matchup on first mount (in case startIndex didn't apply)
+    if (!initialScrollDone.current) {
+      initialScrollDone.current = true;
+      if (myMatchupIndex > 0) {
+        emblaApi.scrollTo(myMatchupIndex, true);
+      }
+    }
     return () => { emblaApi.off("select", onSelect); };
-  }, [emblaApi, onSelect]);
+  }, [emblaApi, onSelect, myMatchupIndex]);
 
   const scrollTo = useCallback((idx: number) => emblaApi?.scrollTo(idx), [emblaApi]);
 
