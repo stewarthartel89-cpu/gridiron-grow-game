@@ -82,22 +82,40 @@ const LeagueCarousel = () => {
                 <motion.button
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
+                  whileTap={{ scale: 0.97 }}
                   transition={{ delay: i * 0.05 }}
                   onClick={() => {
                     setActiveLeague(card.league.leagueId);
                     navigate("/league");
                   }}
-                  className="w-full rounded-2xl border border-border bg-card p-6 flex flex-col items-start gap-3 active:border-primary/40 transition-colors"
+                  className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-6 flex flex-col items-start gap-4 transition-all active:border-primary/60"
+                  style={{
+                    boxShadow: "0 0 20px hsl(152 100% 45% / 0.08), 0 4px 24px hsl(0 0% 0% / 0.2)",
+                  }}
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary glow-primary">
-                    <Users className="h-6 w-6 text-primary-foreground" />
+                  {/* Glow gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none" />
+                  <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
+
+                  <div className="relative flex w-full items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary glow-primary">
+                      <Users className="h-7 w-7 text-primary-foreground" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-display text-lg font-bold text-foreground tracking-wide">{card.league.leagueName}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Tap to enter league</p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <p className="font-display text-base font-bold text-foreground">{card.league.leagueName}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Tap to enter league</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-primary text-xs font-semibold mt-auto">
-                    View <ChevronRight className="h-3.5 w-3.5" />
+
+                  <div className="relative flex w-full items-center justify-between mt-auto">
+                    <div className="flex items-center gap-1.5 rounded-xl bg-primary/15 px-4 py-2 text-primary text-xs font-bold tracking-wide">
+                      Enter League <ChevronRight className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex -space-x-1.5">
+                      {[...Array(3)].map((_, j) => (
+                        <div key={j} className="h-6 w-6 rounded-full border-2 border-card bg-secondary" />
+                      ))}
+                    </div>
                   </div>
                 </motion.button>
               </div>
