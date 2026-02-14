@@ -46,7 +46,7 @@ const LeaguePage = () => {
     <PageTransition>
       <div className="min-h-[100dvh] bg-background pb-28">
         {/* Header */}
-        <header className="border-b border-border bg-card safe-area-top">
+        <header className="border-b border-border bg-gradient-to-b from-card to-background safe-area-top">
           <div className="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
             <button
               onClick={() => navigate("/settings")}
@@ -61,7 +61,7 @@ const LeaguePage = () => {
                 onClick={() => leagues.length > 1 && setDropdownOpen((o) => !o)}
                 className="flex items-center gap-2 active:opacity-70 transition-opacity min-w-0 max-w-full"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary glow-primary">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary glow-primary shadow-lg shadow-primary/20">
                   <Trophy className="h-4 w-4 text-primary-foreground" />
                 </div>
                 <h1 className="font-display text-base font-bold tracking-wider text-foreground truncate">
@@ -120,7 +120,7 @@ const LeaguePage = () => {
         </header>
 
         {/* Tab bar */}
-        <div className="border-b border-border bg-card/80 backdrop-blur-sm">
+        <div className="border-b border-border bg-card/80 backdrop-blur-md shadow-lg shadow-black/10">
           <div className="mx-auto max-w-2xl flex px-2 py-1.5 gap-1">
             {TABS.map(({ key, label, icon: Icon }) => {
               const isActive = tab === key;
@@ -131,7 +131,7 @@ const LeaguePage = () => {
                   whileTap={{ scale: 0.95 }}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold tracking-wide transition-all duration-200 relative ${
                     isActive
-                      ? "bg-primary/15 text-primary"
+                      ? "bg-primary/15 text-primary shadow-lg shadow-primary/10"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   }`}
                 >

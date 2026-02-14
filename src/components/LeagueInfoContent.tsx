@@ -147,7 +147,7 @@ const LeagueInfoContent = () => {
       <MatchupSchedule />
 
       {/* 2. Diversification Modifier */}
-      <div className="rounded-xl border border-border bg-card p-4">
+      <div className="rounded-xl border border-border bg-card card-elevated p-4">
         <div className="flex items-center gap-2 mb-3">
           <Shield className="h-4 w-4 text-bonus" />
           <h3 className="font-display text-sm font-bold text-foreground">DIVERSIFICATION MODIFIER</h3>
@@ -174,7 +174,7 @@ const LeagueInfoContent = () => {
       </div>
 
       {/* 3. League Details */}
-      <div className="rounded-xl border border-border bg-card p-4">
+      <div className="rounded-xl border border-border bg-card card-elevated p-4">
         <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2 mb-3">
           <Info className="h-4 w-4 text-primary" />
           LEAGUE DETAILS
@@ -224,7 +224,7 @@ const LeagueInfoContent = () => {
 
       {/* 4. Commissioner Settings — only visible to commissioner */}
       {isCommissioner && (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="rounded-xl border border-border bg-card card-elevated overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <Crown className="h-4 w-4 text-primary" />
             <h3 className="font-display text-sm font-bold text-foreground">COMMISSIONER SETTINGS</h3>

@@ -23,7 +23,7 @@ const Standings = () => {
   );
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="rounded-xl border border-border bg-card card-elevated overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
           <Trophy className="h-4 w-4 text-xp" />

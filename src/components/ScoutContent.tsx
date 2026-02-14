@@ -48,7 +48,7 @@ const sortOptions: { value: SortOption; label: string }[] = [
 const QuoteCard = memo(({ quote, onClick }: { quote: FormattedQuote; onClick: () => void }) => {
   const isUp = quote.changePct >= 0;
   return (
-    <button onClick={onClick} className="w-full text-left rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-colors">
+    <button onClick={onClick} className="w-full text-left rounded-xl border border-border bg-card card-elevated p-4 hover:bg-accent/50 hover:border-primary/20 transition-all duration-200">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary font-display text-[11px] font-bold text-secondary-foreground">{quote.symbol}</div>
