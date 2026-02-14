@@ -1,7 +1,8 @@
-import { useMemo } from "react";
-import { LeagueMember, Holding, weeklyMatchups } from "@/data/mockData";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import useEmblaCarousel from "embla-carousel-react";
+import { LeagueMember, Holding, weeklyMatchups, Matchup } from "@/data/mockData";
 import { classifyHolding, AssetBucket, BUCKETS, calculateDiversification } from "@/lib/diversificationModifier";
-import { TrendingUp, TrendingDown, Shield } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 /** Group holdings by diversity bucket */
 function groupByBucket(holdings: Holding[]): Record<AssetBucket, Holding[]> {
@@ -70,17 +71,14 @@ const HoldingRow = ({ home, away, bucket }: { home: Holding | null; away: Holdin
   );
 };
 
-const MatchupDetailView = () => {
-  const matchup = weeklyMatchups[0];
-  const home = matchup?.home;
-  const away = matchup?.away;
+/* ── Single matchup slide ── */
+const MatchupSlide = ({ matchup }: { matchup: Matchup }) => {
+  const { home, away } = matchup;
 
-  const homeGroups = useMemo(() => home ? groupByBucket(home.holdings) : { Stocks: [], ETFs: [] }, [home]);
-  const awayGroups = useMemo(() => away ? groupByBucket(away.holdings) : { Stocks: [], ETFs: [] }, [away]);
-  const homeDiv = useMemo(() => home ? calculateDiversification(home.holdings) : { tier: "moderate" as const, allocations: [], worstDeviation: 0, worstBucket: "Stocks" as AssetBucket, modifier: 1 }, [home]);
-  const awayDiv = useMemo(() => away ? calculateDiversification(away.holdings) : { tier: "moderate" as const, allocations: [], worstDeviation: 0, worstBucket: "Stocks" as AssetBucket, modifier: 1 }, [away]);
-
-  if (!matchup || !home || !away) return <p className="text-sm text-muted-foreground text-center py-8">No matchup this week.</p>;
+  const homeGroups = useMemo(() => groupByBucket(home.holdings), [home]);
+  const awayGroups = useMemo(() => groupByBucket(away.holdings), [away]);
+  const homeDiv = useMemo(() => calculateDiversification(home.holdings), [home]);
+  const awayDiv = useMemo(() => calculateDiversification(away.holdings), [away]);
 
   const homeScore = home.weeklyGrowthPct * homeDiv.modifier;
   const awayScore = away.weeklyGrowthPct * awayDiv.modifier;
@@ -175,6 +173,99 @@ const MatchupDetailView = () => {
           </div>
         </div>
       ))}
+    </div>
+  );
+};
+
+/* ── Main carousel wrapper ── */
+const MatchupDetailView = () => {
+  const matchups = weeklyMatchups;
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "start",
+    containScroll: "trimSnaps",
+  });
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    onSelect();
+    return () => { emblaApi.off("select", onSelect); };
+  }, [emblaApi, onSelect]);
+
+  const scrollTo = useCallback((idx: number) => emblaApi?.scrollTo(idx), [emblaApi]);
+
+  if (!matchups.length) {
+    return <p className="text-sm text-muted-foreground text-center py-8">No matchups this week.</p>;
+  }
+
+  const current = matchups[selectedIndex];
+
+  return (
+    <div className="space-y-3">
+      {/* Swipeable team-name header */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="relative">
+          {/* Carousel */}
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex">
+              {matchups.map((m, idx) => (
+                <div key={m.id} className="flex-[0_0_100%] min-w-0">
+                  <button
+                    className="w-full flex items-center justify-between px-4 py-3"
+                    onClick={() => scrollTo(idx)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-[10px] font-bold ${
+                        idx === selectedIndex ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                      }`}>
+                        {m.home.avatar}
+                      </div>
+                      <span className="text-xs font-bold text-foreground truncate">{m.home.teamName}</span>
+                    </div>
+                    <span className="font-display text-[9px] font-bold text-muted-foreground tracking-wider shrink-0 mx-2">VS</span>
+                    <div className="flex items-center gap-2 flex-row-reverse min-w-0">
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-[10px] font-bold ${
+                        idx === selectedIndex ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                      }`}>
+                        {m.away.avatar}
+                      </div>
+                      <span className="text-xs font-bold text-foreground truncate">{m.away.teamName}</span>
+                    </div>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Dot indicators */}
+        <div className="flex items-center justify-center gap-1.5 pb-2.5">
+          {matchups.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => scrollTo(idx)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                idx === selectedIndex
+                  ? "w-5 bg-primary"
+                  : "w-1.5 bg-muted-foreground/30"
+              }`}
+            />
+          ))}
+          <span className="ml-2 text-[9px] text-muted-foreground font-semibold">
+            {selectedIndex + 1}/{matchups.length}
+          </span>
+        </div>
+      </div>
+
+      {/* Detail for selected matchup */}
+      <MatchupSlide matchup={current} />
     </div>
   );
 };
